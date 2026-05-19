@@ -8,6 +8,21 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.x-red.svg)](https://streamlit.io)
 [![CI](https://github.com/bobaoxu2001/Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/actions/workflows/ci.yml/badge.svg)](https://github.com/bobaoxu2001/Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/actions/workflows/ci.yml)
 
+## TL;DR
+
+End-to-end provider-level healthcare FWA pipeline on the public Kaggle Healthcare Provider Fraud Detection dataset, with a GenAI-style audit-review layer and a Streamlit analyst dashboard.
+
+| | |
+|---|---|
+| **Data** | 558K+ inpatient/outpatient claims joined with 138K beneficiaries → **5,410 providers × 27 features** |
+| **Best model** | Random Forest — **ROC-AUC 0.9535** · **PR-AUC 0.7290** · **F1 0.6927** · Brier 0.041 |
+| **Stability** | 5-fold stratified CV: **0.9498 ± 0.0142** ROC-AUC |
+| **Selection metric** | PR-AUC on held-out test (imbalance-aware) |
+| **RAG layer** | TF-IDF retrieval over audit policy text → structured review packets for analyst sign-off |
+| **Reproducibility** | `make real-pipeline && make dashboard` · 17 pytest checks · GitHub Actions CI |
+
+> **Disclaimer:** Public educational dataset only — not Manulife/John Hancock data, not LTC-specific, no PHI. RAG policy text is synthetic. See §4 Data Disclaimer.
+
 ---
 
 ## 1. Project Overview
@@ -83,8 +98,11 @@ Random Forest is selected as the production model by **PR-AUC on the held-out se
 > before we pay claims we can't recover — while protecting legitimate providers and
 > maintaining audit explainability for regulators?"
 
-Healthcare FWA (Fraud, Waste, and Abuse) costs the US healthcare system an estimated
-$100B–$300B per year. Common provider-level FWA patterns include:
+Healthcare Fraud, Waste, and Abuse (FWA) is a persistent source of improper payments
+across public and private insurance programs in the US. Detection is difficult because
+fraudulent providers are a small minority of a large population, the patterns evolve
+over time, and most cases require human review for regulatory defensibility. Common
+provider-level FWA patterns include:
 
 - **Upcoding:** billing a higher-acuity service (e.g. inpatient) than actually rendered
 - **Unbundling:** splitting a single procedure into multiple separately-billed components
@@ -465,23 +483,30 @@ streamlit run app.py
 
 ---
 
-## 20. Dashboard Screenshots
+## 20. Dashboard
 
-To regenerate the dashboard screenshots locally:
+The Streamlit dashboard (`app.py`) is a 6-tab analyst-facing interface over the trained models, monitoring reports, and RAG review packets. It is the screenshot-friendly surface for the whole pipeline.
+
+### Launching locally
 
 ```bash
-make dashboard            # or: streamlit run app.py
+make dashboard            # equivalent to: streamlit run app.py
 ```
 
-Then capture each of the following tabs and save to `outputs/figures/`:
+The app starts at `http://localhost:8501` and reads from `data/processed/` and `outputs/`. If real Kaggle data is present, it shows the real provider table; otherwise it falls back to the synthetic demo and labels every panel accordingly.
 
-| Tab | Suggested filename |
-|---|---|
-| Executive Overview | `outputs/figures/dashboard_executive_overview.png` |
-| Model Performance | `outputs/figures/dashboard_model_performance.png` |
-| High-Risk Provider Review Assistant | `outputs/figures/dashboard_provider_review.png` |
+### Tabs
 
-Screenshots are not committed by default to keep the repo light — capture and embed them locally if presenting.
+| # | Tab | What it shows |
+|---|---|---|
+| 1 | Executive Overview | Provider count, fraud rate, headline model metrics (AUC, F1), data-source banner |
+| 2 | Provider FWA Pattern Explorer | Reimbursement distribution, fraud rate by volume bucket, top high-risk providers, inpatient vs outpatient mix |
+| 3 | Model Performance | Per-model metrics, ROC, PR curve, calibration plot, confusion matrix, feature importance, threshold sweep table |
+| 4 | High-Risk Provider Review Assistant | Provider-ID selector, model score, top risk indicators, full RAG review packet |
+| 5 | Model Monitoring & Data Quality | Missing-value chart, class balance, provider volume distribution, monitoring report |
+| 6 | Auditability & Responsible AI | Data disclaimer, model assumptions, RAG limitations, human-in-the-loop framing |
+
+Screenshots are not committed to keep the repo light. Capture from the running app and embed in any external deck or write-up.
 
 ---
 
