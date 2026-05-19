@@ -207,6 +207,13 @@ tab_choice = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.caption("Portfolio demo — not clinical or production grade.")
 
+st.sidebar.markdown("---")
+st.sidebar.caption(
+    "⚠️ **Disclaimer:** This project uses the public Kaggle Healthcare Provider "
+    "Fraud Detection dataset. It is NOT Manulife/John Hancock data, NOT LTC-specific, "
+    "and contains no PHI. RAG policy text is synthetic."
+)
+
 
 # ════════════════════════════════════════════════════════════════════════════
 # TAB 1 — Executive Overview
@@ -349,6 +356,7 @@ elif tab_choice == "Provider FWA Pattern Explorer":
                     ax.hist(data[data <= data.quantile(0.99)], bins=50, color="#1565C0", alpha=0.8)
                     ax.set_xlabel("Avg Reimbursement / Claim")
                     st.pyplot(fig); plt.close()
+                st.caption("Provider-level total reimbursement; outliers above P99 warrant review regardless of model score.")
 
             st.markdown("---")
             col3, col4 = st.columns(2)
@@ -507,7 +515,7 @@ elif tab_choice == "Model Performance":
         st.subheader("ROC Curves")
         if os.path.exists(roc_path):
             st.image(roc_path, use_container_width=True)
-            st.caption("ROC summarizes ranking quality across all thresholds.")
+            st.caption("Higher curve = better separation of fraudulent vs. legitimate providers across all thresholds.")
         else:
             st.info("Run `python src/modeling.py`.")
 
@@ -678,8 +686,7 @@ elif tab_choice == "Model Monitoring & Data Quality":
             if os.path.exists(p_fv):
                 st.subheader("Fraud Rate by Volume Bucket")
                 st.image(p_fv, use_container_width=True)
-                st.caption("Higher-volume providers are not necessarily fraudulent — "
-                           "but extreme outliers warrant closer review.")
+                st.caption("Provider volume alone is not a fraud signal — distribution should be roughly flat across buckets if volume is uninformative.")
         with col4:
             if os.path.exists(p_miss):
                 st.subheader("Feature Missingness")
@@ -772,7 +779,7 @@ analyst must review every HIGH-risk flag before any action is taken.
 ### Why the Metrics Should Be Interpreted Carefully
 
 - Provider-level labels are binary (Yes/No) with no partial credit for near-fraud patterns
-- Class imbalance: ~40% fraud rate in Kaggle labels (higher than real-world rates)
+- Class imbalance: ~9.4% fraud rate in Kaggle provider labels (still higher than real-world FWA prevalence, which is typically <2%)
 - Provider-level aggregation smooths individual claim noise; granular patterns may be missed
 - Model performance on a withheld test set is not a guarantee of production performance
 - Feature importance is from training data — distribution shift can degrade results

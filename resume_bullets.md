@@ -141,3 +141,45 @@ The pipeline has a clean fallback to synthetic data so it can be demonstrated wi
 proprietary data, and a Streamlit dashboard wraps everything. The architecture mirrors what
 a production FWA system would look like before adding real-time scoring and case management
 integration."
+
+---
+
+## 5 Likely Interview Questions & Answer Outlines
+
+### Q1: "Walk me through your approach to engineering provider-level features from claim-level data."
+- Started with three Kaggle tables: ~558K inpatient+outpatient claims joined with beneficiary demographics
+- Joined claims to beneficiary on BeneID to attach chronic conditions, age, death indicators
+- Aggregated to Provider granularity using groupby + multiple agg functions
+- Engineered 27 features across 5 categories: volume, financial, physician diversity, patient mix, code diversity
+- Key design choice: use *peer-relative* metrics (percentile rank, z-scores) so the model can detect outliers regardless of absolute scale
+
+### Q2: "Your Random Forest got 0.95 AUC. Is that real or is there leakage?"
+- Honest answer: the metric is real on the held-out 20% test split, but I want to be transparent about caveats
+- Labels are provider-level binary flags from Kaggle — they aggregate claim-level noise, so edge cases are ambiguous
+- No target leakage in features: all features are computed before label is touched, and I drop the Provider ID
+- The 9.35% fraud rate is somewhat balanced compared to real-world prevalence (typically <2%), which inflates discriminability
+- In production I'd expect lower AUC and would calibrate against analyst feedback
+
+### Q3: "How would you decide what threshold to use in production?"
+- Threshold is an operational decision, not a modeling one
+- Generated a full threshold sweep table (`outputs/reports/threshold_analysis.csv`) showing precision, recall, F1, and number flagged at each threshold
+- The right threshold depends on reviewer capacity: if I have 10 reviewers who can each handle 50 cases/week, I can flag ~500 providers/week
+- Pick threshold where precision-flagged-volume ≈ analyst capacity
+- For LTC FWA, I'd lean toward recall-oriented (lower threshold) since missed fraud is expensive and irreversible
+
+### Q4: "Why TF-IDF instead of LLM embeddings for the RAG component?"
+- Deliberate choice for this portfolio: TF-IDF is deterministic, auditable, no API keys, runs offline
+- For real audit/compliance work, deterministic retrieval is often preferred — analysts can trace exactly why a policy rule was retrieved
+- Embeddings (sentence-transformers) would handle synonyms better and I'd swap in a local model for v2
+- Both approaches are fundamentally cosine-similarity-on-vectors; the embedding choice is the difference
+
+### Q5: "How would you monitor this model in production?"
+- Already prototyped in `src/monitoring.py`:
+  - Data drift: monthly distributions of reimbursement amounts, claim volume, provider feature means
+  - Class balance: rolling fraud-flag rate to catch label-pipeline issues
+  - Feature stability: per-feature missingness and distribution drift vs training baseline
+- For real production I'd add:
+  - Prediction drift (PSI on score distribution)
+  - Calibration drift (Brier score on labeled dispositions)
+  - Reviewer feedback loop: flagged-but-not-fraud rate → retraining signal
+  - Alerting on threshold-crossing for any of the above
