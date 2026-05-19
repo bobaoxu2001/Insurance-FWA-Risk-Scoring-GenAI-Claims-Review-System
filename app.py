@@ -804,7 +804,7 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 │   ├── data_generation.py              # Original synthetic data (kept for compatibility)
 │   ├── synthetic_data_generation.py    # Renamed copy with synthetic-mode header
 │   ├── data_ingestion.py               # NEW: loads & validates Kaggle CSV files
-│   ├── provider_feature_engineering.py # NEW: 25+ provider-level features
+│   ├── provider_feature_engineering.py # NEW: 27 provider-level features
 │   ├── preprocessing.py                # Synthetic claim preprocessing
 │   ├── feature_engineering.py          # Synthetic claim feature engineering
 │   ├── modeling.py                     # ML models (real or synthetic)

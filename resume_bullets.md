@@ -27,7 +27,7 @@
 
 - Built an end-to-end healthcare provider FWA analytics pipeline using the Kaggle Healthcare
   Provider Fraud Detection Analysis dataset: ingested and joined inpatient, outpatient, and
-  beneficiary CSVs using defensive column-matching logic; engineered 25+ provider-level
+  beneficiary CSVs using defensive column-matching logic; engineered 27 provider-level
   features including reimbursement outlier z-scores, inpatient billing ratio, physician count
   diversity, chronic condition complexity, admission duration, and diagnosis/procedure code
   diversity per provider.
@@ -54,7 +54,7 @@
 
 ## GitHub Pinned Repository Description (<=120 chars)
 
-Healthcare provider FWA: Kaggle claims -> 25+ features -> ML models -> RAG audit reviews -> Streamlit dashboard
+Healthcare provider FWA: Kaggle claims -> 27 features -> ML models -> RAG audit reviews -> Streamlit dashboard
 
 ---
 
@@ -62,7 +62,7 @@ Healthcare provider FWA: Kaggle claims -> 25+ features -> ML models -> RAG audit
 
 Built a healthcare provider fraud, waste & abuse (FWA) detection system using the public
 Kaggle Healthcare Provider Fraud Detection dataset. The pipeline joins inpatient, outpatient,
-and beneficiary records into a provider-level feature table with 25+ engineered features, then
+and beneficiary records into a provider-level feature table with 27 engineered features, then
 trains ensemble ML models with class-imbalance handling. A RAG-style audit review assistant
 uses TF-IDF policy retrieval to generate structured provider risk summaries — with quantified
 risk indicators, policy citations, and suggested analyst actions — designed for human-in-the-loop
@@ -75,7 +75,7 @@ dashboard with graceful synthetic fallback. Tech: Python, scikit-learn, pandas, 
 
 "I built a healthcare provider fraud detection system using a public Kaggle dataset of
 inpatient, outpatient, and beneficiary claims. The pipeline joins those three data sources
-and engineers about 25 provider-level features -- reimbursement outlier scores, inpatient
+and engineers 27 provider-level features -- reimbursement outlier scores, inpatient
 billing ratio, physician diversity, chronic-condition complexity. I trained Random Forest,
 Gradient Boosting, and Logistic Regression models and did a full threshold sweep to show
 the precision/recall tradeoff at each operating point. On top of the model, I built a

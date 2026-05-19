@@ -16,7 +16,7 @@ An end-to-end FWA analytics pipeline that:
 
 - Ingests and joins the **Kaggle Healthcare Provider Fraud Detection Analysis** dataset
   (inpatient claims + outpatient claims + beneficiary demographics)
-- Engineers **25+ provider-level risk features** (volume, reimbursement, physician patterns,
+- Engineers **27 provider-level risk features** (volume, reimbursement, physician patterns,
   chronic-condition complexity, inpatient ratio, admission duration, code diversity)
 - Trains **Logistic Regression, Random Forest, Gradient Boosting / XGBoost, and Isolation
   Forest** models with class-imbalance handling
@@ -154,7 +154,7 @@ This is the closest freely-available public proxy for healthcare FWA analytics:
 ```mermaid
 graph TD
     A[Raw CSV Files<br>Inpatient + Outpatient + Beneficiary] --> B[data_ingestion.py<br>File discovery & validation]
-    B --> C[provider_feature_engineering.py<br>25+ provider-level features]
+    B --> C[provider_feature_engineering.py<br>27 provider-level features]
     C --> D[modeling.py<br>LR + RF + GB/XGB + IsoForest]
     D --> E[Risk Scores per Provider]
     E --> F[explainability.py<br>Feature importance + provider explanations]
@@ -182,7 +182,7 @@ src/data_ingestion.py        — find files, validate columns, load DataFrames
          v
 src/provider_feature_engineering.py
          — join inpatient + outpatient on BeneID to beneficiary
-         — aggregate to provider level (25+ features)
+         — aggregate to provider level (27 features)
          — attach fraud labels
          — save data/processed/provider_modeling_table.csv
          |
@@ -347,12 +347,18 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 │   ├── raw/                            # Place Kaggle CSVs here (see data/README.md)
 │   ├── processed/                      # provider_modeling_table.csv / claims_features.csv
 │   └── documents/                      # policy_rules.txt + synthetic claim docs
+├── sql/
+│   └── provider_features.sql           # Portable SQL impl of provider feature aggregation
+├── tests/
+│   └── test_project_structure.py       # pytest sanity checks (CI-gated)
 ├── outputs/
 │   ├── figures/                        # PNG charts
 │   ├── models/                         # best_fwa_model.pkl, isolation_forest.pkl
-│   ├── reports/                        # metrics JSON, threshold CSV, explanations
+│   ├── reports/                        # metrics JSON, threshold CSV, explanations, executive_summary.md
 │   └── sample_reviews/                 # review_{ID}.txt files
 ├── notebooks/
+├── .github/workflows/ci.yml            # Compile + pytest on push
+├── Makefile                            # make install / real-pipeline / dashboard / test
 ├── app.py                              # Streamlit 6-tab dashboard
 ├── config.py                           # Path constants
 ├── requirements.txt
@@ -437,6 +443,8 @@ streamlit run app.py
 - `outputs/sample_reviews/review_*.txt` — formatted RAG audit reviews
 - `outputs/figures/roc_curve.png`, `precision_recall_curve.png`, `feature_importance.png`
 - `outputs/figures/provider_risk_distribution.png`, `fraud_rate_by_volume_bucket.png`
+- `outputs/reports/executive_summary.md` — **leadership-facing 1-pager** (business framing, headline metrics, production roadmap)
+- `sql/provider_features.sql` — **portable SQL implementation** of the provider feature aggregation (Snowflake / BigQuery / Redshift compatible)
 
 ---
 
@@ -466,7 +474,7 @@ Screenshots are not committed by default to keep the repo light — capture and 
 
 - Built a provider-level healthcare FWA analytics pipeline using the public Kaggle Healthcare
   Provider Fraud Detection dataset, joining inpatient, outpatient, and beneficiary records to
-  engineer 25+ provider risk features and train ML fraud detection models.
+  engineer 27 provider risk features and train ML fraud detection models.
 - Trained and evaluated Logistic Regression, Random Forest, Gradient Boosting/XGBoost, and
   Isolation Forest models on imbalanced provider fraud labels, reporting ROC-AUC, PR-AUC,
   precision/recall tradeoffs, and performing threshold sweep analysis.
@@ -478,7 +486,7 @@ Screenshots are not committed by default to keep the repo light — capture and 
 
 - Built an end-to-end healthcare provider FWA analytics pipeline using the Kaggle Healthcare
   Provider Fraud Detection Analysis dataset: ingested and joined inpatient, outpatient, and
-  beneficiary CSVs; engineered 25+ provider-level features including reimbursement outlier
+  beneficiary CSVs; engineered 27 provider-level features including reimbursement outlier
   scores, inpatient billing ratio, chronic condition complexity, admission duration, and
   diagnosis/procedure code diversity.
 - Trained and evaluated Logistic Regression, Random Forest, Gradient Boosting/XGBoost, and
@@ -498,13 +506,13 @@ Screenshots are not committed by default to keep the repo light — capture and 
 
 ## 22. Resume GitHub Description
 
-Healthcare provider FWA risk scoring: Kaggle claims data → 25+ features → ML models → RAG audit reviews → Streamlit dashboard
+Healthcare provider FWA risk scoring: Kaggle claims data → 27 features → ML models → RAG audit reviews → Streamlit dashboard
 
 ---
 
 ## 23. LinkedIn Featured Project
 
-Built a healthcare provider fraud, waste & abuse (FWA) detection system using the public Kaggle Healthcare Provider Fraud Detection dataset. The pipeline joins inpatient, outpatient, and beneficiary records into a provider-level feature table (25+ features), trains ensemble ML models with class-imbalance handling, and generates RAG-style audit review packets via TF-IDF policy retrieval. A 6-tab Streamlit dashboard surfaces risk scores, model performance, threshold analysis, and structured provider reviews — designed for human-in-the-loop analyst workflows. Full pipeline runs with or without the Kaggle download (synthetic fallback mode included).
+Built a healthcare provider fraud, waste & abuse (FWA) detection system using the public Kaggle Healthcare Provider Fraud Detection dataset. The pipeline joins inpatient, outpatient, and beneficiary records into a provider-level feature table (27 features), trains ensemble ML models with class-imbalance handling, and generates RAG-style audit review packets via TF-IDF policy retrieval. A 6-tab Streamlit dashboard surfaces risk scores, model performance, threshold analysis, and structured provider reviews — designed for human-in-the-loop analyst workflows. Full pipeline runs with or without the Kaggle download (synthetic fallback mode included).
 
 ---
 
