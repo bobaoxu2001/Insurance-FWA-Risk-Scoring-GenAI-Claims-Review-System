@@ -196,11 +196,44 @@ Reported metrics on held-out test set (80/20 stratified split):
 | F1 @ threshold | Balanced summary |
 | Threshold sweep table | Operations teams pick based on reviewer capacity |
 
+### Real Dataset Results
+
+Pipeline run on **Kaggle Healthcare Provider Fraud Detection Analysis** (Train split):
+
+| Source | Providers | Features | Fraud Rate |
+|---|---|---|---|
+| Train_Beneficiarydata | 138,556 beneficiaries | — | — |
+| Train_Inpatientdata | 40,474 claims | — | — |
+| Train_Outpatientdata | 517,737 claims | — | — |
+| **Provider table (processed)** | **5,410 providers** | **27** | **9.35% (506 fraudulent)** |
+
+**Model performance on held-out test set (80/20 stratified split):**
+
+| Model | ROC-AUC | F1 | Recall | Precision |
+|---|---|---|---|---|
+| **Random Forest** ⭐ | **0.9535** | **0.6927** | **0.7030** | 0.6828 |
+| Gradient Boosting | 0.9489 | 0.6413 | 0.5842 | 0.7115 |
+| Logistic Regression | 0.9062 | 0.4821 | 0.8020 | 0.3435 |
+| Isolation Forest | anomaly scoring | — | — | — |
+
+**Top 5 features by Random Forest importance:**
+
+| Rank | Feature | Importance |
+|---|---|---|
+| 1 | `max_admission_duration` | 0.144 |
+| 2 | `total_reimbursed` | 0.134 |
+| 3 | `total_deductible_amount` | 0.098 |
+| 4 | `total_inpatient_reimbursed` | 0.075 |
+| 5 | `inpatient_claim_count` | 0.062 |
+
+> Metrics JSON (`outputs/reports/model_metrics.json`) annotated with `"data_source": "real_kaggle_provider"`.
+
 ### Why Metrics Should Be Interpreted Carefully
 
-- Kaggle labels have ~40% fraud rate — much higher than real-world prevalence
+- Kaggle labels have ~9.4% fraud rate at the provider level, with some label noise from aggregation
 - Provider-level labels aggregate claim-level noise; edge cases are ambiguous
 - Test set performance is not a guarantee of production performance
+- Real LTC fraud detection would require domain-specific features, clinical context, compliance review, and ongoing model validation
 - Isolation Forest AUC not reported (unsupervised; no predict_proba threshold calibration)
 
 ---

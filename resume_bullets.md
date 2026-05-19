@@ -7,9 +7,9 @@
 ## Short (3 bullets for resume)
 
 - Built a provider-level healthcare FWA analytics pipeline using the public Kaggle Healthcare
-  Provider Fraud Detection dataset, joining inpatient, outpatient, and beneficiary records to
-  engineer 25+ provider risk features and train ML fraud detection models achieving ROC-AUC
-  ~0.82–0.88 depending on data source.
+  Provider Fraud Detection dataset (558K+ claims across 5,410 providers), joining inpatient,
+  outpatient, and beneficiary records to engineer 27 provider-level risk features; best model
+  (Random Forest) achieved ROC-AUC 0.9535 and F1 0.6927 on a held-out test set.
 
 - Trained and evaluated Logistic Regression, Random Forest, Gradient Boosting/XGBoost, and
   Isolation Forest models on imbalanced provider fraud labels, reporting ROC-AUC, PR-AUC,
@@ -82,6 +82,32 @@ the precision/recall tradeoff at each operating point. On top of the model, I bu
 RAG-style review system that retrieves relevant billing audit rules via TF-IDF and generates
 structured, human-readable audit packets for each high-risk provider. The whole thing runs in
 Streamlit with a graceful fallback to synthetic data when the Kaggle download is not present."
+
+---
+
+## Copy-Ready Final Resume Version (Real Results, Paste Directly)
+
+> Use these after running the full Kaggle pipeline. Numbers reflect real test-set results.
+
+- Engineered a provider-level healthcare FWA risk scoring pipeline in Python using the public
+  Kaggle Healthcare Provider Fraud Detection dataset; joined 558K+ inpatient/outpatient claims
+  with beneficiary demographics to produce a 5,410-provider modeling table with 27 risk
+  features (reimbursement outlier scores, inpatient billing ratio, admission duration,
+  chronic-condition complexity, physician diversity).
+
+- Trained and evaluated Logistic Regression, Random Forest, and Gradient Boosting classifiers
+  with class-imbalance handling; best model (Random Forest) achieved ROC-AUC **0.9535**,
+  F1 **0.6927**, and Recall **0.7030** at the default threshold (9.35% fraud base rate);
+  generated a full precision/recall threshold sweep table to support analyst capacity planning.
+
+- Developed a RAG-style provider audit review assistant using TF-IDF retrieval over synthetic
+  healthcare billing audit rules; generates structured review packets — quantified risk
+  indicators, policy citations, documentation gaps, suggested analyst actions — for 15
+  providers per run, supporting human-in-the-loop FWA workflows.
+
+- Built a model monitoring module (data quality checks, reimbursement distribution drift,
+  fraud rate by provider volume bucket) and a 6-tab Streamlit dashboard exposing risk scores,
+  model performance, threshold analysis, and provider review summaries to FWA analysts.
 
 ---
 
