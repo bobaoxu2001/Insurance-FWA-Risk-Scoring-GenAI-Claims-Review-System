@@ -20,12 +20,16 @@ REPO_ROOT = Path(__file__).parent.parent
 REQUIRED_SRC_FILES = [
     "src/data_ingestion.py",
     "src/provider_feature_engineering.py",
+    "src/graph_features.py",        # bipartite-graph derived features
     "src/modeling.py",
+    "src/hyperparameter_tuning.py", # RandomizedSearchCV
     "src/explainability.py",
     "src/rag_claim_review.py",
     "src/llm_review.py",            # tier-1/2 semantic + LLM RAG
     "src/monitoring.py",
+    "src/psi_drift.py",             # PSI drift detection
     "src/fairness_audit.py",        # demographic disparate-impact check
+    "src/feedback_loop.py",         # analyst-disposition retraining loop
 ]
 
 REQUIRED_TOP_LEVEL = [
@@ -191,6 +195,81 @@ def test_llm_reviews_if_present() -> None:
         "LLM review should declare its generation backend"
     assert "semantic" in sample.lower() or "sentence-transformers" in sample.lower(), \
         "LLM review should declare its semantic retrieval backend"
+
+
+# ── Graph features (added to provider table) ──────────────────────────────────
+
+
+def test_graph_features_in_table_if_present() -> None:
+    """If graph_features.py has been run, the provider table should carry
+    all five graph-derived columns."""
+    p = REPO_ROOT / "data" / "processed" / "provider_modeling_table.csv"
+    if not p.is_file():
+        pytest.skip("provider table missing")
+    # Read just the header to avoid loading the full CSV
+    with p.open() as f:
+        header = next(f).strip().split(",")
+    expected = {
+        "beneficiary_sharing_rate", "avg_co_provider_count",
+        "physician_sharing_rate", "provider_clustering_coefficient",
+        "provider_pagerank",
+    }
+    present = expected & set(header)
+    if not present:
+        pytest.skip("graph features not added yet; run src/graph_features.py")
+    assert expected <= set(header), (
+        f"Provider table missing graph features: {expected - set(header)}"
+    )
+
+
+# ── PSI drift report ──────────────────────────────────────────────────────────
+
+
+def test_psi_drift_report_if_present() -> None:
+    p = REPO_ROOT / "outputs" / "reports" / "psi_drift_report.csv"
+    if not p.is_file():
+        pytest.skip("psi_drift_report.csv not generated yet")
+    import csv
+    with p.open() as f:
+        rows = list(csv.DictReader(f))
+    assert rows, "psi_drift_report.csv has no rows"
+    required = {"feature", "psi", "verdict", "train_mean", "test_mean"}
+    assert required <= set(rows[0].keys()), \
+        f"PSI report missing columns: {required - set(rows[0].keys())}"
+    # At least one feature should have a non-NaN PSI
+    psis = [float(r["psi"]) for r in rows if r["psi"] not in ("", "nan")]
+    assert psis, "No valid PSI values in report"
+
+
+# ── Hyperparameter tuning ─────────────────────────────────────────────────────
+
+
+def test_hp_tuning_result_if_present() -> None:
+    p = REPO_ROOT / "outputs" / "reports" / "hp_tuning_results.json"
+    if not p.is_file():
+        pytest.skip("hp_tuning_results.json not generated yet")
+    with p.open() as f:
+        data = json.load(f)
+    for key in ("_model_class", "_scoring", "_cv", "best_score_pr_auc", "best_params"):
+        assert key in data, f"hp_tuning_results.json missing key: {key}"
+    assert data["best_score_pr_auc"] > 0.5, \
+        f"Tuned PR-AUC suspiciously low: {data['best_score_pr_auc']}"
+
+
+# ── Feedback loop ────────────────────────────────────────────────────────────
+
+
+def test_feedback_loop_metrics_if_present() -> None:
+    p = REPO_ROOT / "outputs" / "reports" / "feedback_loop_metrics.json"
+    if not p.is_file():
+        pytest.skip("feedback_loop_metrics.json not generated yet")
+    with p.open() as f:
+        data = json.load(f)
+    for key in ("n_total", "n_flagged", "precision_of_flag",
+                "false_confirm_rate", "miss_rate_on_audit"):
+        assert key in data, f"feedback metrics missing key: {key}"
+    assert 0 <= data["precision_of_flag"] <= 1, \
+        f"precision_of_flag out of [0,1]: {data['precision_of_flag']}"
 
 
 # ── Top risk factors ───────────────────────────────────────────────────────────

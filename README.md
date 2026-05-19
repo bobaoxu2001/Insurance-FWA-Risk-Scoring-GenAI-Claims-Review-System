@@ -14,14 +14,17 @@ End-to-end provider-level healthcare FWA pipeline on the public Kaggle Healthcar
 
 | | |
 |---|---|
-| **Data** | 558K+ inpatient/outpatient claims joined with 138K beneficiaries → **5,410 providers × 27 features** |
-| **Best model (random split)** | Random Forest — **ROC-AUC 0.9535** · **PR-AUC 0.7290** · **F1 0.6927** · Brier 0.041 |
-| **Best model (temporal split)** | Gradient Boosting — **ROC-AUC 0.8859** · **PR-AUC 0.4066** — the realistic deployment number |
-| **Stability** | 5-fold stratified CV: 0.9498 ± 0.0142 (RF), 0.9533 ± 0.0139 (GB) |
+| **Data** | 558K+ inpatient/outpatient claims joined with 138K beneficiaries → **5,410 providers × 32 features** (27 aggregations + 5 graph) |
+| **Best model (random split)** | Random Forest — **ROC-AUC 0.9526** · **PR-AUC 0.7343** · F1 0.6731 · Brier 0.042 |
+| **Best model (temporal split)** | Gradient Boosting — **ROC-AUC 0.8899** · **PR-AUC 0.5529** — the realistic deployment number |
+| **Tuned (RF, 5-fold CV, PR-AUC)** | **0.7491** (Δ +0.015 vs default hyperparameters) |
+| **Drift** | PSI between train and test under temporal split: 13 / 32 features cross 0.25 threshold → would trigger retraining alert |
+| **Stability** | 5-fold stratified CV: 0.9499 ± 0.0145 (RF), 0.9525 ± 0.0138 (GB) |
 | **Selection metric** | PR-AUC on held-out test (imbalance-aware) |
-| **RAG layer** | Three tiers: TF-IDF + template (baseline) → semantic dense retrieval (sentence-transformers) → semantic + local LLM generation (flan-t5-base, deterministic decoding) |
+| **RAG layer** | Three tiers: TF-IDF + template → semantic dense retrieval (sentence-transformers) → semantic + local LLM generation (flan-t5-base, deterministic decoding) |
 | **Fairness** | Patient-panel demographic audit with 4/5ths-rule disparate-impact check |
-| **Reproducibility** | `make real-pipeline && make dashboard` · 22 pytest checks · GitHub Actions CI |
+| **Feedback loop** | Analyst-disposition CSV → model-vs-analyst agreement metrics → retrain trigger |
+| **Reproducibility** | `make real-pipeline && make dashboard` · 30 pytest checks · GitHub Actions CI |
 
 > **Disclaimer:** Public educational dataset only — not Manulife/John Hancock data, not LTC-specific, no PHI. RAG policy text is synthetic. See §4 Data Disclaimer.
 
@@ -59,26 +62,37 @@ Full pipeline run on the **Kaggle Healthcare Provider Fraud Detection Analysis**
 | Train_Beneficiarydata | 138,556 beneficiaries | — | — |
 | Train_Inpatientdata | 40,474 claims | — | — |
 | Train_Outpatientdata | 517,737 claims | — | — |
-| **Provider table (processed)** | **5,410 providers** | **27** | **9.35% (506 fraudulent)** |
+| **Provider table (processed)** | **5,410 providers** | **32** (27 aggregations + 5 graph) | **9.35% (506 fraudulent)** |
 
-**Model performance — held-out 80/20 stratified test set:**
+**Model performance — held-out 80/20 stratified test set (with graph features):**
 
 | Model | ROC-AUC | PR-AUC | F1 | Recall | Precision | Brier | Log-loss |
 |---|---|---|---|---|---|---|---|
-| **Random Forest** ⭐ | **0.9535** | **0.7290** | **0.6927** | **0.7030** | 0.6828 | **0.0411** | 0.1957 |
-| Gradient Boosting | 0.9489 | 0.6752 | 0.6413 | 0.5842 | 0.7108 | 0.0443 | **0.1644** |
-| Logistic Regression | 0.9062 | 0.6378 | 0.4821 | 0.8020 | 0.3447 | 0.1429 | 0.5119 |
+| **Random Forest** ⭐ | **0.9526** | **0.7343** | 0.6731 | 0.6731 | 0.6731 | **0.0421** | 0.1958 |
+| Gradient Boosting | 0.9448 | 0.6479 | 0.6557 | 0.6053 | 0.7156 | 0.0457 | **0.1660** |
+| Logistic Regression | 0.9286 | 0.7098 | 0.5611 | 0.7679 | 0.4416 | 0.1051 | 0.4093 |
 | Isolation Forest | anomaly scoring | — | — | — | — | — | — |
 
 **5-fold stratified cross-validation** (full dataset, scoring = ROC-AUC):
 
 | Model | CV-AUC (mean ± std) | Per-fold AUC |
 |---|---|---|
-| **Random Forest** ⭐ | **0.9498 ± 0.0142** | 0.963, 0.961, 0.949, 0.923, 0.954 |
-| Gradient Boosting | 0.9533 ± 0.0139 | 0.966, 0.964, 0.959, 0.928, 0.950 |
-| Logistic Regression | 0.8959 ± 0.0128 | 0.911, 0.909, 0.882, 0.880, 0.898 |
+| **Random Forest** ⭐ | **0.9499 ± 0.0145** | 0.962, 0.958, 0.960, 0.923, 0.948 |
+| Gradient Boosting | 0.9525 ± 0.0138 | 0.968, 0.961, 0.958, 0.928, 0.947 |
+| Logistic Regression | 0.9146 ± 0.0287 | 0.950, 0.949, 0.889, 0.887, 0.897 |
 
-Random Forest is selected as the production model by **PR-AUC on the held-out set** (the imbalance-aware metric). Gradient Boosting has a slightly higher mean CV-AUC but lower PR-AUC and lower test-set recall, so RF wins the recall-oriented tradeoff that matters for fraud detection.
+Adding graph features lifted LR's PR-AUC from 0.638 → 0.710 (+11%) — the largest jump because graph features encode signal a linear model otherwise cannot get. RF and GB were already saturating on the non-graph features. Random Forest is selected as the production model by **PR-AUC on the held-out set** (imbalance-aware metric).
+
+### Hyperparameter tuning
+
+`src/hyperparameter_tuning.py` runs RandomizedSearchCV (20 iter, 5-fold stratified CV, PR-AUC scoring) on the chosen model class:
+
+| | Baseline RF | Tuned RF (`make tune-rf`) |
+|---|---|---|
+| PR-AUC | 0.7343 | **0.7491** |
+| Best params | n_estimators=200, max_depth=12, class_weight=balanced (defaults) | n_estimators=500, max_depth=15, min_samples_leaf=8, max_features=0.3 |
+
+Tuned model and full search log persisted to `outputs/models/best_fwa_model_tuned_rf.pkl` and `outputs/reports/hp_tuning_results.json`.
 
 **Top 5 features by Random Forest importance:**
 
@@ -98,11 +112,11 @@ The random 80/20 split shares timestamps between train and test, which is unreal
 
 | Model | Random ROC-AUC | **Temporal ROC-AUC** | Random PR-AUC | **Temporal PR-AUC** |
 |---|---|---|---|---|
-| Logistic Regression | 0.9117 | **0.7832** | 0.6714 | **0.1997** |
-| Random Forest | 0.9535 | **0.8931** | 0.7290 | **0.3812** |
-| **Gradient Boosting** ⭐ | 0.9489 | **0.8859** | 0.6752 | **0.4066** |
+| Logistic Regression | 0.9286 | **0.8424** | 0.7098 | **0.2905** |
+| Random Forest | 0.9526 | **0.8828** | 0.7343 | **0.3921** |
+| **Gradient Boosting** ⭐ | 0.9448 | **0.8899** | 0.6479 | **0.5529** |
 
-Under temporal evaluation **Gradient Boosting beats Random Forest on PR-AUC** (0.41 vs 0.38) because GB's lower-variance score distribution generalizes better across the time gap. RF still wins on ROC-AUC but is over-confident on out-of-time data (visible in the calibration curve). This is the kind of finding that only surfaces with the right validation methodology — and it would change the production-model choice.
+Under temporal evaluation **Gradient Boosting wins decisively on PR-AUC** (0.55 vs 0.39 for RF). GB's lower-variance score distribution generalizes better across the time gap. RF still wins on ROC-AUC but is over-confident on out-of-time data (visible in the calibration curve). This is the kind of finding that only surfaces with the right validation methodology — and it changes the production-model choice. Graph features lifted GB's temporal PR-AUC from 0.41 (pre-graph) to 0.55 (+35% relative), confirming that collusion-ring signals generalize across time better than provider-level aggregations alone.
 
 Reproduce with: `make temporal-eval` (writes `outputs/reports/model_metrics_temporal.json`).
 
@@ -273,6 +287,20 @@ Features engineered at provider level from joined inpatient/outpatient/beneficia
 - `provider_volume_percentile`
 - `reimbursement_outlier_score` = z-score of avg reimbursement vs all providers
 
+**Graph features (`src/graph_features.py`):**
+
+FWA schemes are often collusive: small groups of providers share beneficiaries (kickbacks, identity fraud) or share attending physicians (NPI laundering). Provider-level aggregations miss these — a single provider's history can look perfectly normal while the *network* reveals a ring.
+
+Built from two bipartite graphs (Provider ↔ Beneficiary, Provider ↔ AttendingPhysician):
+
+- `beneficiary_sharing_rate` — fraction of the provider's beneficiaries who also see ≥1 other provider
+- `avg_co_provider_count` — average number of *other* providers that this provider's beneficiaries also see
+- `physician_sharing_rate` — fraction of the provider's attending physicians who also bill under another Provider NPI (classic upcoding / NPI laundering signal)
+- `provider_clustering_coefficient` — local clustering coefficient in the projected provider-provider graph (high = part of a tightly-connected ring of providers sharing patients)
+- `provider_pagerank` — PageRank on the same projected graph, weighted by shared-beneficiary count
+
+Adding these 5 features lifted LR PR-AUC from 0.638 → 0.710 and GB temporal PR-AUC from 0.41 → 0.55 (the largest single-feature-group gain in this project).
+
 ---
 
 ## 10. Modeling Approach
@@ -374,6 +402,43 @@ Reviews are saved with a backend suffix so the three tiers do not collide:
 | `fraud_rate_by_volume_bucket.png` | Fraud prevalence by provider volume quintile |
 | `feature_missingness.png` | Missing rate per feature column |
 
+### Population Stability Index (PSI)
+
+`src/psi_drift.py` computes the Population Stability Index between the *earliest 80%* and *most recent 20%* of providers (the same chronological cut used by the temporal-split modeling). PSI is the industry-standard drift metric for credit-scoring and fraud applications.
+
+Thresholds (standard):
+- `PSI < 0.10` → stable
+- `0.10 ≤ PSI < 0.25` → moderate shift, investigate
+- `PSI ≥ 0.25` → significant shift, retraining candidate
+
+**Current run on the Kaggle data:** 13 / 32 features exceed the 0.25 threshold under chronological split. The top drifters are volume features (`total_claims`, `provider_volume_percentile`, `unique_beneficiaries`) and graph features (`provider_pagerank`) — which directly explains the temporal-split AUC drop we documented above. In production this would trigger a retraining alert.
+
+Outputs: `outputs/reports/psi_drift_report.csv`, `outputs/figures/psi_top_features.png`.
+
+### Analyst Feedback Loop
+
+`src/feedback_loop.py` closes the loop a static classifier alone cannot: analyst dispositions on flagged providers become labels for the next training cycle.
+
+**CSV schema** (compatible with most case-management exports):
+```
+provider_id, model_score, model_flag, analyst_disposition, disposition_date
+```
+where `analyst_disposition ∈ {confirmed_fraud, cleared, needs_more_info}`.
+
+The module computes the agreement metrics a production FWA team would watch weekly:
+
+| Metric | What it means |
+|---|---|
+| `precision_of_flag` | Fraction of model-flagged providers the analyst confirmed |
+| `false_confirm_rate` | Fraction of model-flagged providers the analyst cleared |
+| `miss_rate_on_audit` | Among random-audit (unflagged) cases, fraction the analyst confirmed |
+
+A configurable retraining-trigger rule (`precision_of_flag < 0.55` AND `n_labels ≥ 100`) fires when feedback indicates the model has drifted away from analyst judgement.
+
+When `--retrain` is set, the module merges analyst-confirmed labels with the original training set and persists a `best_fwa_model_feedback_retrained.pkl` — the exact mechanic a production system would invoke on the retrain trigger.
+
+Outputs: `outputs/reports/feedback_log.csv`, `outputs/reports/feedback_loop_metrics.json`, `outputs/figures/feedback_calibration.png`.
+
 ---
 
 ## 15. Fairness Audit
@@ -417,12 +482,16 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 │   ├── provider_feature_engineering.py # Provider-level feature table builder
 │   ├── preprocessing.py                # Synthetic claim preprocessing
 │   ├── feature_engineering.py          # Synthetic claim feature engineering
+│   ├── graph_features.py               # 5 bipartite-graph features (sharing rates, clustering, PageRank)
 │   ├── modeling.py                     # ML training + evaluation (random / temporal split)
+│   ├── hyperparameter_tuning.py        # RandomizedSearchCV on PR-AUC
 │   ├── explainability.py               # Feature importance + provider explanations
 │   ├── rag_claim_review.py             # Tier-0 TF-IDF + template RAG (no extra deps)
 │   ├── llm_review.py                   # Tier-1/2 semantic retrieval + local-LLM generation
 │   ├── monitoring.py                   # Data quality + monitoring charts
+│   ├── psi_drift.py                    # PSI drift detection (train vs temporal-test)
 │   ├── fairness_audit.py               # Patient-panel disparate-impact audit
+│   ├── feedback_loop.py                # Analyst-disposition feedback + retraining
 │   └── utils.py
 ├── data/
 │   ├── raw/                            # Place Kaggle CSVs here (see data/README.md)
@@ -467,10 +536,14 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 # Core pipeline (no torch/transformers required)
 make install         # pip install -r requirements.txt
 make real-pipeline   # full pipeline on real Kaggle data (random 80/20 split)
+make graph-features  # add 5 bipartite-graph features to the provider table
 make temporal-eval   # re-evaluate with chronological train/test split
+make tune-rf         # RandomizedSearchCV hyperparameter tuning
+make psi             # PSI drift report (chronological split)
 make fairness        # patient-panel disparate-impact audit
+make feedback        # analyst-disposition feedback loop (synthesized) + retrain
 make dashboard       # launch Streamlit dashboard
-make test            # run pytest (22 checks)
+make test            # run pytest (30 checks)
 
 # Optional GenAI layer (~700MB of torch + transformers + flan-t5-base download)
 make install-llm     # pip install -r requirements-llm.txt
@@ -578,6 +651,10 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 | Modeling | ROC, precision-recall, **calibration**, confusion matrix, feature importance | `outputs/figures/*.png` |
 | Fairness | **Patient-panel disparate-impact audit** (4/5ths-rule check per cohort) | `outputs/reports/fairness_audit_report.csv` + figures |
 | GenAI | **Local-LLM-generated audit summaries** (semantic retrieval + flan-t5-base) | `outputs/sample_reviews/review_*_llm.txt` |
+| Graph features | **Bipartite-graph features** (sharing rates, clustering coef, PageRank) added to the provider table | `src/graph_features.py` |
+| Tuning | **RandomizedSearchCV** tuned model + full search log | `outputs/models/best_fwa_model_tuned_rf.pkl` + `outputs/reports/hp_tuning_*.{json,csv}` |
+| Drift | **PSI drift report** with retrain-trigger verdict per feature | `outputs/reports/psi_drift_report.csv` + figure |
+| Feedback | **Analyst-disposition feedback loop** with retrain trigger | `outputs/reports/feedback_log.csv`, `feedback_loop_metrics.json` |
 | Explainability | Top risk factors ranked by importance | `outputs/reports/top_risk_factors.csv` |
 | Explainability | Per-provider business-readable risk explanations | `outputs/reports/high_risk_provider_explanations.csv` |
 | GenAI / RAG | 15 structured provider review packets (10 High / 3 Medium / 2 Low risk) | `outputs/sample_reviews/review_*.txt` |

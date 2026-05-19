@@ -1,0 +1,16 @@
+{
+  "_model_class": "rf",
+  "_n_iter": 20,
+  "_scoring": "average_precision (PR-AUC)",
+  "_cv": "5-fold StratifiedKFold",
+  "_n_features": 32,
+  "best_score_pr_auc": 0.7491,
+  "best_params": {
+    "n_estimators": 500,
+    "min_samples_split": 20,
+    "min_samples_leaf": 8,
+    "max_features": 0.3,
+    "max_depth": 15,
+    "class_weight": "balanced"
+  }
+}

@@ -1,7 +1,8 @@
 PYTHON ?= python3.11
 
-.PHONY: help install install-llm real-pipeline temporal-eval synthetic-demo \
-        fairness llm-reviews dashboard test clean-outputs
+.PHONY: help install install-llm real-pipeline graph-features temporal-eval \
+        synthetic-demo fairness llm-reviews tune-rf psi feedback dashboard \
+        test clean-outputs
 
 help:
 	@echo "Available targets:"
@@ -12,11 +13,15 @@ help:
 	@echo ""
 	@echo "  Pipelines:"
 	@echo "    real-pipeline    Full pipeline on real Kaggle data (random 80/20 split)"
+	@echo "    graph-features   Add 5 bipartite-graph features to provider table"
 	@echo "    temporal-eval    Re-evaluate models with chronological train/test split"
 	@echo "    synthetic-demo   Pipeline on synthetic fallback data"
 	@echo ""
-	@echo "  Analyses:"
+	@echo "  Production-ML modules:"
+	@echo "    tune-rf          RandomizedSearchCV hyperparameter tuning"
+	@echo "    psi              PSI drift detection (train vs test under temporal split)"
 	@echo "    fairness         Demographic disparate-impact audit on patient panels"
+	@echo "    feedback         Analyst-disposition feedback loop + optional retrain"
 	@echo "    llm-reviews      Generate semantic-retrieval + flan-t5 LLM provider reviews"
 	@echo ""
 	@echo "  Run:"
@@ -33,13 +38,29 @@ install-llm:
 real-pipeline:
 	$(PYTHON) src/data_ingestion.py
 	$(PYTHON) src/provider_feature_engineering.py
+	$(PYTHON) src/graph_features.py
 	$(PYTHON) src/modeling.py --split random
 	$(PYTHON) src/explainability.py
 	$(PYTHON) src/rag_claim_review.py
 	$(PYTHON) src/monitoring.py
 
+graph-features:
+	$(PYTHON) src/graph_features.py
+
 temporal-eval:
 	$(PYTHON) src/modeling.py --split temporal
+
+tune-rf:
+	$(PYTHON) src/hyperparameter_tuning.py --model rf --n-iter 30
+
+tune-gb:
+	$(PYTHON) src/hyperparameter_tuning.py --model gb --n-iter 30
+
+psi:
+	$(PYTHON) src/psi_drift.py
+
+feedback:
+	$(PYTHON) src/feedback_loop.py --retrain
 
 fairness:
 	$(PYTHON) src/fairness_audit.py

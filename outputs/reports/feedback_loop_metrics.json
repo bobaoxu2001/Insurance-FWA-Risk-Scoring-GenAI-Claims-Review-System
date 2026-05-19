@@ -1,0 +1,11 @@
+{
+  "n_total": 300,
+  "n_flagged": 240,
+  "n_unflagged": 60,
+  "n_confirmed_fraud": 145,
+  "n_cleared": 125,
+  "n_needs_more_info": 30,
+  "precision_of_flag": 0.5792,
+  "false_confirm_rate": 0.3167,
+  "miss_rate_on_audit": 0.1
+}
