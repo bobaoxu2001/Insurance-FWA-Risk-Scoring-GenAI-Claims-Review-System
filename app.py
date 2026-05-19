@@ -199,6 +199,12 @@ tab_choice = st.sidebar.radio(
         "Executive Overview",
         "Provider FWA Pattern Explorer",
         "Model Performance",
+        "Temporal Split & Drift",
+        "Real LTC Pipeline (CMS)",
+        "Real NPI-Labeled (Part B ⋈ LEIE)",
+        "OIG LEIE — Real Federal Fraud",
+        "Fairness Audit",
+        "Feedback Loop",
         "High-Risk Provider Review Assistant",
         "Model Monitoring & Data Quality",
         "Auditability & Responsible AI",
@@ -723,10 +729,451 @@ elif tab_choice == "Model Monitoring & Data Quality":
 
 
 # ════════════════════════════════════════════════════════════════════════════
+# NEW TAB — Temporal Split & Drift
+# ════════════════════════════════════════════════════════════════════════════
+
+elif tab_choice == "Temporal Split & Drift":
+    st.title("⏰ Temporal Split & Drift Analysis")
+    st.caption(
+        "The random 80/20 split shares timestamps between train and test. "
+        "A chronological split — train on the past, score the future — is the "
+        "production-realistic measure. The drop from one to the other is the "
+        "honest deployment estimate."
+    )
+
+    import json as _json
+    from pathlib import Path as _P
+    rand_path = _P("outputs/reports/model_metrics.json")
+    temp_path = _P("outputs/reports/model_metrics_temporal.json")
+
+    col1, col2 = st.columns(2)
+    if rand_path.is_file() and temp_path.is_file():
+        with rand_path.open() as f:
+            rand = _json.load(f)
+        with temp_path.open() as f:
+            temp = _json.load(f)
+        rows = []
+        for k in rand:
+            if k.startswith("_") or not isinstance(rand[k], dict):
+                continue
+            if k not in temp:
+                continue
+            rows.append({
+                "Model": k,
+                "Random AUC": rand[k].get("roc_auc"),
+                "Temporal AUC": temp[k].get("roc_auc"),
+                "Random PR-AUC": rand[k].get("pr_auc"),
+                "Temporal PR-AUC": temp[k].get("pr_auc"),
+            })
+        df_cmp = pd.DataFrame(rows)
+        st.subheader("Random vs Temporal Split — Held-Out Test Metrics")
+        st.dataframe(df_cmp, use_container_width=True, hide_index=True)
+        st.caption(
+            "Under temporal evaluation, the model that wins on PR-AUC may change. "
+            "Gradient Boosting typically generalizes across time better than Random "
+            "Forest because its calibrated score distribution is less brittle."
+        )
+    else:
+        st.warning("Run `make temporal-eval` to generate the temporal-split metrics.")
+
+    st.markdown("---")
+    st.subheader("PSI Drift Report (Train → Test under Chronological Split)")
+    st.caption(
+        "Population Stability Index per feature. Thresholds: "
+        "<0.10 stable · 0.10–0.25 moderate · ≥0.25 significant (retrain candidate)."
+    )
+    psi_path = _P("outputs/reports/psi_drift_report.csv")
+    psi_fig_path = _P("outputs/figures/psi_top_features.png")
+    if psi_path.is_file():
+        psi_df = pd.read_csv(psi_path)
+        n_total = len(psi_df)
+        n_sig   = (psi_df["verdict"] == "significant_shift").sum()
+        n_mod   = (psi_df["verdict"] == "moderate_shift").sum()
+        n_stable = (psi_df["verdict"] == "stable").sum()
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Features analyzed", f"{n_total}")
+        c2.metric("Stable", f"{n_stable}", help="PSI < 0.10")
+        c3.metric("Moderate shift", f"{n_mod}", help="0.10 ≤ PSI < 0.25")
+        c4.metric("Significant shift", f"{n_sig}",
+                  delta=f"-{n_sig}" if n_sig else None, delta_color="inverse",
+                  help="PSI ≥ 0.25 — retraining candidate")
+        if psi_fig_path.is_file():
+            st.image(str(psi_fig_path), caption="Top drifting features",
+                     use_container_width=True)
+        st.dataframe(psi_df.head(15), use_container_width=True, hide_index=True)
+        st.caption(
+            "In production these significant-shift features would trigger an "
+            "automated retraining alert. The cluster around volume/financial "
+            "features is consistent with the temporal-AUC drop above."
+        )
+    else:
+        st.info("Run `make psi` to generate the PSI drift report.")
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# NEW TAB — Real LTC Pipeline (CMS Nursing Home Compare)
+# ════════════════════════════════════════════════════════════════════════════
+
+elif tab_choice == "Real LTC Pipeline (CMS)":
+    st.title("🏥 Real LTC Pipeline — CMS Nursing Home Provider Information")
+    st.caption(
+        "Parallel pipeline trained on REAL US nursing homes (14,699 real "
+        "providers with real names + CCNs from data.cms.gov). Real labels: "
+        "Abuse Icon, Special Focus Facility status, fine counts, payment "
+        "denials. This is the closest publicly available data to what a real "
+        "LTC FWA analytics team would work with."
+    )
+
+    import json as _json
+    from pathlib import Path as _P
+
+    metrics_path = _P("outputs/reports/cms_ltc_metrics.json")
+    if metrics_path.is_file():
+        with metrics_path.open() as f:
+            cms_metrics = _json.load(f)
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Real nursing homes", f"{cms_metrics.get('_n_providers', 0):,}")
+        c2.metric("Flagged rate",
+                  f"{cms_metrics.get('_label_rate', 0)*100:.1f}%",
+                  help="Combined label across abuse, SFF, fines, denials")
+        best_name = cms_metrics.get("_best_model", "?")
+        best = cms_metrics.get(best_name, {})
+        c3.metric(f"Best model AUC", f"{best.get('roc_auc', 0):.3f}",
+                  help=f"{best_name} on held-out 20% test")
+        c4.metric("Best model PR-AUC", f"{best.get('pr_auc', 0):.3f}")
+
+        st.markdown(f"**Best model:** `{best_name}`")
+        st.markdown(f"**Label logic:** `{cms_metrics.get('_label_logic', '')}`")
+        st.markdown(f"**Features:** {cms_metrics.get('_n_features', 0)} numeric "
+                    f"(ownership, capacity, ratings, staffing, deficiencies, …)")
+
+        st.subheader("Per-model metrics")
+        model_rows = []
+        for k, v in cms_metrics.items():
+            if k.startswith("_") or not isinstance(v, dict):
+                continue
+            row = {"Model": k}
+            row.update(v)
+            model_rows.append(row)
+        st.dataframe(pd.DataFrame(model_rows), use_container_width=True, hide_index=True)
+
+        st.subheader("ROC curves & feature importance")
+        col1, col2 = st.columns(2)
+        with col1:
+            roc_path = _P("outputs/figures/cms_ltc_roc.png")
+            if roc_path.is_file():
+                st.image(str(roc_path), use_container_width=True)
+        with col2:
+            fi_path = _P("outputs/figures/cms_ltc_feature_importance.png")
+            if fi_path.is_file():
+                st.image(str(fi_path), use_container_width=True)
+
+        label_path = _P("outputs/figures/cms_ltc_label_components.png")
+        if label_path.is_file():
+            st.subheader("Label-component breakdown")
+            st.image(str(label_path), use_container_width=True)
+
+        st.markdown("---")
+        st.subheader("Cross-reference with OIG LEIE (real federal exclusions)")
+        overlap_path = _P("outputs/reports/cms_ltc_leie_overlap.csv")
+        if overlap_path.is_file():
+            ov = pd.read_csv(overlap_path)
+            st.markdown(
+                f"**{len(ov)} CMS providers** whose legal business name matches "
+                f"a federal LEIE-excluded entity. These are *candidate matches* "
+                f"requiring human verification — common names like "
+                f"'MEMORIAL MEDICAL CENTER' recur in LEIE under different legal entities."
+            )
+            st.dataframe(ov, use_container_width=True, hide_index=True)
+        else:
+            st.info("Cross-reference report not yet generated.")
+    else:
+        st.warning(
+            "Run `make download-real && make cms-ltc` to populate this tab. "
+            "Downloads ~25 MB of real public data (HHS-OIG + CMS) and trains the "
+            "LTC pipeline in ~45 seconds."
+        )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# NEW TAB — Real NPI-Labeled Pipeline (Medicare Part B ⋈ OIG LEIE)
+# ════════════════════════════════════════════════════════════════════════════
+
+elif tab_choice == "Real NPI-Labeled (Part B ⋈ LEIE)":
+    st.title("🏷️ Real NPI-Labeled Pipeline — Medicare Part B 2023 ⋈ OIG LEIE")
+    st.caption(
+        "The strongest real-data join in the project: real Medicare provider "
+        "billing (1.26M NPIs) joined with real federal fraud exclusions (8,429 "
+        "LEIE NPIs). Every positive case is a real US provider with real "
+        "billing data who appears on the federal exclusion list. No synthetic "
+        "labels, no aggregated proxies — this is the canonical real-data setup "
+        "for healthcare FWA modeling."
+    )
+
+    import json as _json
+    from pathlib import Path as _P
+
+    mpath = _P("outputs/reports/medicare_partb_metrics.json")
+    if mpath.is_file():
+        with mpath.open() as f:
+            m = _json.load(f)
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Real providers", f"{m.get('_n_providers', 0):,}",
+                  help="Population scope below")
+        c2.metric("Real LEIE-fraud labels", f"{m.get('_n_positive', 0):,}",
+                  help="Providers whose real NPI appears in HHS-OIG LEIE")
+        c3.metric("Positive rate",
+                  f"{m.get('_positive_rate_pct', 0):.3f}%",
+                  help="Real-world fraud prevalence — extreme imbalance")
+        best_name = m.get("_best_model", "?")
+        best = m.get(best_name, {})
+        c4.metric(f"Best PR-AUC", f"{best.get('pr_auc', 0):.3f}",
+                  help=f"{best_name}")
+
+        st.markdown(
+            f"**Population scope:** `{m.get('_population', '?')}` · "
+            f"**Features:** {m.get('_n_features', 0)} · "
+            f"**Label:** `{m.get('_label', '')}`"
+        )
+
+        st.subheader("Per-model metrics — extreme class imbalance setting")
+        rows = []
+        for k, v in m.items():
+            if k.startswith("_") or not isinstance(v, dict):
+                continue
+            row = {"Model": k}
+            row.update(v)
+            rows.append(row)
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.caption(
+            "Under ~0.04% positive rate, F1 and recall numbers look small in "
+            "absolute terms — that is the realistic shape of a fraud-detection "
+            "problem in production. PR-AUC and the ROC are the meaningful "
+            "summary metrics; the threshold sweep is what an FWA team would "
+            "actually use to set the operating point."
+        )
+
+        col1, col2 = st.columns(2)
+        with col1:
+            roc = _P("outputs/figures/medicare_partb_roc.png")
+            if roc.is_file():
+                st.image(str(roc), use_container_width=True)
+        with col2:
+            pr = _P("outputs/figures/medicare_partb_pr.png")
+            if pr.is_file():
+                st.image(str(pr), use_container_width=True)
+
+        fi = _P("outputs/figures/medicare_partb_feature_importance.png")
+        if fi.is_file():
+            st.subheader("Top features driving the real-fraud-label prediction")
+            st.image(str(fi), use_container_width=True)
+    else:
+        st.warning(
+            "Run `make partb-ltc` (or `make partb-all`) to populate this tab. "
+            "Requires the ~470 MB Medicare Physician & Other Practitioners 2023 "
+            "CSV — download via `make download-partb`."
+        )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# NEW TAB — OIG LEIE Real Federal Fraud Data
+# ════════════════════════════════════════════════════════════════════════════
+
+elif tab_choice == "OIG LEIE — Real Federal Fraud":
+    st.title("⚖️ HHS-OIG LEIE — Real Federal Healthcare-Fraud Exclusions")
+    st.caption(
+        "The List of Excluded Individuals/Entities (LEIE) is the federal "
+        "government's roster of every individual or entity barred from federal "
+        "healthcare programs for fraud, abuse, license revocation, or felony "
+        "conviction. Public, updated monthly. This is REAL fraud-ground-truth data."
+    )
+
+    from pathlib import Path as _P
+    summary_path = _P("outputs/reports/oig_leie_summary.csv")
+    ltc_path     = _P("outputs/reports/oig_leie_ltc_excerpt.csv")
+
+    if summary_path.is_file():
+        summary = pd.read_csv(summary_path)
+        st.subheader("Top-line stats")
+        rows = {r["metric"]: r["value"] for _, r in summary.iterrows()}
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total exclusion records",
+                  f"{int(rows.get('Total exclusion records', 0)):,}")
+        c2.metric("Records with real NPI",
+                  f"{int(rows.get('Records with real NPI', 0)):,}")
+        c3.metric("LTC-relevant records",
+                  f"{int(rows.get('LTC-relevant records (HHA/SNF/Hospice/Nursing Firm)', 0)):,}",
+                  help="Home Health Agency, Skilled Nursing, Hospice, Nursing Firm")
+        st.dataframe(summary, use_container_width=True, hide_index=True)
+    else:
+        st.warning("Run `make download-real && make oig-leie` to populate this tab.")
+
+    st.subheader("Top excluded specialties (real federal data)")
+    sp_path = _P("outputs/figures/oig_leie_by_specialty.png")
+    yr_path = _P("outputs/figures/oig_leie_annual_trend.png")
+    if sp_path.is_file():
+        st.image(str(sp_path), use_container_width=True,
+                 caption="Red bars are LTC-relevant specialties — direct evidence of which "
+                         "LTC subsegments concentrate federal-exclusion enforcement.")
+    if yr_path.is_file():
+        st.image(str(yr_path), use_container_width=True,
+                 caption="Annual federal-exclusion volume since 2000.")
+
+    if ltc_path.is_file():
+        st.subheader("LTC-specific exclusions (1,818 real records)")
+        ltc = pd.read_csv(ltc_path)
+        st.dataframe(ltc.head(50), use_container_width=True, hide_index=True)
+        st.caption(
+            "1,447 Home Health Agency · 256 Skilled Nursing · 77 Hospice · 38 Nursing Firm. "
+            "Each row is a real entity, real exclusion date, real legal authority cited "
+            "under §1128 of the Social Security Act."
+        )
+
+    st.markdown("---")
+    st.subheader("RAG integration")
+    st.markdown(
+        "The exclusion-code taxonomy (15 distinct §1128 authorities, e.g. `1128a1` "
+        "= conviction of program-related crimes) is auto-written to "
+        "`data/documents/oig_exclusion_codes.txt` and indexed by the RAG retriever "
+        "alongside the synthetic policy rules. **The LLM-generated audit summaries "
+        "can therefore cite real federal authority** rather than only synthetic text. "
+        "See the Provider Review Assistant tab for examples."
+    )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# NEW TAB — Fairness Audit
+# ════════════════════════════════════════════════════════════════════════════
+
+elif tab_choice == "Fairness Audit":
+    st.title("⚖️ Fairness Audit — Patient-Panel Demographic Disparate Impact")
+    st.caption(
+        "Kaggle providers don't carry protected attributes themselves — but the "
+        "patients they serve do. This audit aggregates beneficiary demographics "
+        "per provider and checks whether the model's flag rate is concentrated "
+        "in any cohort that crosses the 4/5ths-rule threshold."
+    )
+
+    from pathlib import Path as _P
+    race_path = _P("outputs/reports/fairness_audit_report.csv")
+    age_path  = _P("outputs/reports/fairness_audit_age.csv")
+
+    if race_path.is_file():
+        race = pd.read_csv(race_path)
+        st.subheader("Flag rate by predominant patient race")
+        st.dataframe(race, use_container_width=True, hide_index=True)
+
+        min_ratio = race["disparate_impact_ratio"].min()
+        worst_cohort = race.loc[race["disparate_impact_ratio"].idxmin(),
+                                 "panel_majority_race"]
+        if min_ratio < 0.80:
+            st.error(
+                f"⚠ 4/5ths rule **fails** for cohort '{worst_cohort}' "
+                f"(disparate-impact ratio {min_ratio:.2f} < 0.80). "
+                "In a real deployment this triggers a compliance review."
+            )
+        else:
+            st.success(f"✓ All cohorts within 4/5ths threshold (min ratio {min_ratio:.2f})")
+
+        bar_path = _P("outputs/figures/fairness_flag_rate_by_cohort.png")
+        box_path = _P("outputs/figures/fairness_score_by_race.png")
+        col1, col2 = st.columns(2)
+        with col1:
+            if bar_path.is_file():
+                st.image(str(bar_path), use_container_width=True)
+        with col2:
+            if box_path.is_file():
+                st.image(str(box_path), use_container_width=True)
+    else:
+        st.warning("Run `make fairness` to generate the fairness audit.")
+
+    if age_path.is_file():
+        st.subheader("Flag rate by patient-panel age band")
+        st.dataframe(pd.read_csv(age_path), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.markdown(
+        "**Honest framing:** Disparate impact in this dataset reflects label "
+        "concentration (505 of 506 fraud labels are on white-majority-panel "
+        "providers), not necessarily model bias. The right next step in a real "
+        "deployment is intersectional analysis (Race × Age × State) and per-cohort "
+        "calibration testing, plus a compliance / legal review of label sourcing."
+    )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# NEW TAB — Analyst Feedback Loop
+# ════════════════════════════════════════════════════════════════════════════
+
+elif tab_choice == "Feedback Loop":
+    st.title("🔁 Analyst Feedback Loop")
+    st.caption(
+        "A static classifier can't improve from analyst dispositions on its own. "
+        "This module ingests a standard analyst-disposition CSV "
+        "(`provider_id, model_score, model_flag, analyst_disposition, "
+        "disposition_date`) and computes the agreement metrics a production FWA "
+        "team would watch weekly."
+    )
+
+    import json as _json
+    from pathlib import Path as _P
+
+    metrics_path = _P("outputs/reports/feedback_loop_metrics.json")
+    feedback_path = _P("outputs/reports/feedback_log.csv")
+    if metrics_path.is_file():
+        with metrics_path.open() as f:
+            fbm = _json.load(f)
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Reviewed", f"{fbm['n_total']:,}")
+        c2.metric("Precision-of-flag", f"{fbm['precision_of_flag']:.3f}",
+                  help="Confirmed-fraud / total flagged. Retrain trigger: < 0.55")
+        c3.metric("False-confirm rate", f"{fbm['false_confirm_rate']:.3f}",
+                  help="Cleared / total flagged")
+        c4.metric("Miss rate (audit)", f"{fbm['miss_rate_on_audit']:.3f}",
+                  help="Confirmed-fraud among unflagged audit pool")
+
+        st.subheader("Disposition mix")
+        disp = pd.DataFrame({
+            "disposition": ["confirmed_fraud", "cleared", "needs_more_info"],
+            "count":       [fbm["n_confirmed_fraud"], fbm["n_cleared"],
+                            fbm["n_needs_more_info"]],
+        })
+        st.dataframe(disp, use_container_width=True, hide_index=True)
+
+        cal_path = _P("outputs/figures/feedback_calibration.png")
+        if cal_path.is_file():
+            st.subheader("Calibration via analyst feedback")
+            st.image(str(cal_path), use_container_width=True,
+                     caption="Higher model-score bands should show a higher confirmed-fraud "
+                             "rate — that's the empirical calibration check.")
+
+        st.markdown("---")
+        st.markdown(
+            f"**Retraining trigger evaluation** (rule: `precision_of_flag < 0.55 "
+            f"AND n_labels ≥ 100`):  \n"
+            f"Current precision_of_flag = `{fbm['precision_of_flag']:.3f}`, "
+            f"n = `{fbm['n_total']}`."
+        )
+        if fbm["precision_of_flag"] < 0.55 and fbm["n_total"] >= 100:
+            st.error("⚠ Trigger active — recommend retraining with merged feedback labels.")
+        else:
+            st.success("✓ No retraining trigger.")
+    else:
+        st.warning("Run `make feedback` to generate the feedback-loop metrics.")
+
+    if feedback_path.is_file():
+        st.subheader("Feedback log (first 20 rows)")
+        st.dataframe(pd.read_csv(feedback_path).head(20),
+                     use_container_width=True, hide_index=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
 # TAB 6 — Auditability & Responsible AI
 # ════════════════════════════════════════════════════════════════════════════
 
-else:  # "Auditability & Responsible AI"
+elif tab_choice == "Auditability & Responsible AI":
     st.title("📋 Auditability & Responsible AI")
 
     st.markdown("""

@@ -1,0 +1,30 @@
+__pycache__/
+.ipynb_checkpoints/
+.env
+.venv/
+venv/
+.DS_Store
+*.pyc
+.git/
+.github/
+
+# Raw + large data files — mount at runtime instead
+data/raw/
+
+# Generated outputs — usually rebuilt inside container
+# Comment these out if you want to ship pre-trained models in the image
+outputs/figures/*.png
+outputs/models/*.pkl
+outputs/reports/*.csv
+outputs/reports/*.json
+outputs/reports/*.txt
+outputs/sample_reviews/*.txt
+
+# Notebooks (not needed for the dashboard)
+notebooks/
+
+# Dev artifacts
+.pytest_cache/
+*.egg-info/
+build/
+dist/

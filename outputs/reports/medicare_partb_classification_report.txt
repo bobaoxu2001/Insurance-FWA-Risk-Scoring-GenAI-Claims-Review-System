@@ -1,0 +1,11 @@
+Medicare Part B 2023 ⋈ OIG LEIE — best model: RandomForest
+Population: ltc  n_test=38658  positive rate=0.0129%
+============================================================
+              precision    recall  f1-score   support
+
+          OK     0.9999    0.9998    0.9999     38653
+    Excluded     0.0000    0.0000    0.0000         5
+
+    accuracy                         0.9997     38658
+   macro avg     0.4999    0.4999    0.4999     38658
+weighted avg     0.9997    0.9997    0.9997     38658

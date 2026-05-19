@@ -32,7 +32,10 @@ REQUIRED_SRC_FILES = [
     "src/feedback_loop.py",         # analyst-disposition retraining loop
     "src/oig_leie_analysis.py",     # real federal exclusion data
     "src/cms_ltc_pipeline.py",      # real CMS Nursing Home pipeline
+    "src/medicare_partb_pipeline.py",  # real Medicare Part B ⋈ LEIE NPI labels
     "scripts/download_real_data.sh",
+    "Dockerfile",
+    ".dockerignore",
 ]
 
 REQUIRED_TOP_LEVEL = [
@@ -336,6 +339,31 @@ def test_cms_leie_overlap_if_present() -> None:
                     "Legal Business Name", "matched_leie"}
         assert required <= set(rows[0].keys()), \
             f"CMS-LEIE overlap missing columns: {required - set(rows[0].keys())}"
+
+
+# ── Medicare Part B ⋈ LEIE pipeline ───────────────────────────────────────────
+
+
+def test_partb_metrics_if_present() -> None:
+    p = REPO_ROOT / "outputs" / "reports" / "medicare_partb_metrics.json"
+    if not p.is_file():
+        pytest.skip("medicare_partb_metrics.json not generated yet")
+    with p.open() as f:
+        data = json.load(f)
+    assert data.get("_data_source") == "real_medicare_partb_2023_xref_oig_leie", \
+        "Part B metrics must declare real-NPI-join provenance"
+    assert data.get("_n_providers", 0) >= 10_000, \
+        f"Part B population suspiciously small: {data.get('_n_providers')}"
+    assert "LEIE" in data.get("_label", ""), \
+        "Part B label must reference LEIE"
+    # PR-AUC under extreme imbalance should still beat the prevalence baseline by a lot
+    model_entries = {k: v for k, v in data.items()
+                     if not k.startswith("_") and isinstance(v, dict)}
+    pr_aucs = [v.get("pr_auc", 0) for v in model_entries.values()]
+    prevalence = data.get("_positive_rate_pct", 0) / 100
+    assert max(pr_aucs) > prevalence * 3, \
+        (f"Best PR-AUC ({max(pr_aucs)}) should exceed 3× prevalence "
+         f"({prevalence}) — got only {max(pr_aucs) / max(prevalence, 1e-6):.1f}x")
 
 
 # ── Top risk factors ───────────────────────────────────────────────────────────

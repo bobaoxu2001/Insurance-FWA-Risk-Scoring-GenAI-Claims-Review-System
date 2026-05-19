@@ -1,8 +1,9 @@
 PYTHON ?= python3.11
 
-.PHONY: help install install-llm download-real real-pipeline graph-features \
-        temporal-eval synthetic-demo fairness llm-reviews tune-rf tune-gb \
-        psi feedback oig-leie cms-ltc dashboard test clean-outputs
+.PHONY: help install install-llm download-real download-partb real-pipeline \
+        graph-features temporal-eval synthetic-demo fairness llm-reviews \
+        tune-rf tune-gb psi feedback oig-leie cms-ltc partb-ltc partb-all \
+        docker docker-llm dashboard test clean-outputs
 
 help:
 	@echo "Available targets:"
@@ -15,6 +16,9 @@ help:
 	@echo "  Real-data pipelines:"
 	@echo "    oig-leie         Analyze 83K real federal-fraud exclusion records"
 	@echo "    cms-ltc          Train LTC FWA model on 14,699 real US nursing homes"
+	@echo "    download-partb   Download Medicare Physician 2023 (~470 MB)"
+	@echo "    partb-ltc        Train on 193K LTC providers w/ real NPI LEIE labels"
+	@echo "    partb-all        Train on full 1.26M Medicare Part B universe"
 	@echo ""
 	@echo "  Kaggle pipelines:"
 	@echo "    real-pipeline    Full pipeline on real Kaggle data (random 80/20 split)"
@@ -28,6 +32,10 @@ help:
 	@echo "    fairness         Demographic disparate-impact audit on patient panels"
 	@echo "    feedback         Analyst-disposition feedback loop + optional retrain"
 	@echo "    llm-reviews      Generate semantic-retrieval + flan-t5 LLM provider reviews"
+	@echo ""
+	@echo "  Containerization:"
+	@echo "    docker           Build CPU-only Docker image (core deps)"
+	@echo "    docker-llm       Build Docker image with torch + transformers"
 	@echo ""
 	@echo "  Run:"
 	@echo "    dashboard        Launch Streamlit dashboard"
@@ -48,6 +56,28 @@ oig-leie:
 
 cms-ltc:
 	$(PYTHON) src/cms_ltc_pipeline.py
+
+download-partb:
+	@mkdir -p data/raw/cms_partb
+	@if [ ! -s data/raw/cms_partb/medicare_physician_by_provider_2023.csv ]; then \
+	    echo "Downloading Medicare Physician & Other Practitioners 2023 (~470 MB)..."; \
+	    curl -L -o data/raw/cms_partb/medicare_physician_by_provider_2023.csv \
+	        "https://data.cms.gov/sites/default/files/2025-04/22edfd1e-d17a-4478-ad6b-92cac2a5a3c4/MUP_PHY_R25_P05_V20_D23_Prov.csv"; \
+	else \
+	    echo "Already present: data/raw/cms_partb/medicare_physician_by_provider_2023.csv"; \
+	fi
+
+partb-ltc:
+	$(PYTHON) src/medicare_partb_pipeline.py --population ltc
+
+partb-all:
+	$(PYTHON) src/medicare_partb_pipeline.py --population all
+
+docker:
+	docker build -t fwa-portfolio .
+
+docker-llm:
+	docker build --build-arg INSTALL_LLM=1 -t fwa-portfolio-llm .
 
 real-pipeline:
 	$(PYTHON) src/data_ingestion.py

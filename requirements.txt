@@ -7,3 +7,5 @@ seaborn
 streamlit
 joblib
 pytest
+networkx         # used by src/graph_features.py
+requests         # used by scripts/download_real_data.sh helper for CMS paginated download

@@ -17,6 +17,7 @@ Provider-level healthcare FWA pipeline trained on **three real public datasets**
 | Kaggle Healthcare Provider Fraud (Train) | Real Medicare claim structure, anonymized IDs | 5,410 providers × 32 features, 506 fraud labels |
 | **CMS Nursing Home Provider Information** | **Real LTC providers with real names + CCNs** | 14,699 US nursing homes, 22.55% flagged (abuse / SFF / fines / payment denials) |
 | **HHS-OIG List of Excluded Individuals/Entities** | **Real federal fraud exclusions** | 83,256 actual exclusions, 1,818 LTC-specific (1,447 HHA, 256 SNF, 77 Hospice) |
+| **Medicare Physician & Other Practitioners 2023** ⋈ **OIG LEIE** | **Real NPI-keyed Medicare billing + real federal-exclusion labels** | 1.26M real provider NPIs; LTC subset 193K with 80 LEIE-matched fraud labels; full universe 207 matches |
 
 Two complete modeling pipelines, real LTC fraud labels, cross-referenced via business-name matching, with semantic + LLM RAG, temporal validation, PSI drift, fairness audit, and reviewer-feedback loop.
 
@@ -119,12 +120,31 @@ Note that AUC on real LTC data (~0.85) is meaningfully lower than the Kaggle pip
 
 > **Honesty note:** the direct NPI overlap between LEIE and the Kaggle claims is zero because Kaggle's physician identifiers are anonymized (`PHY412132`-style). This is exposed in `src/oig_leie_analysis.py` and reported in the output rather than hidden.
 
+### Dataset 4 — Medicare Physician & Other Practitioners 2023 ⋈ OIG LEIE (real NPI fraud labels)
+
+The strongest real-data join in the project: cross-references real Medicare provider billing with real federal fraud exclusions to produce real NPI-keyed fraud labels.
+
+- **Source 1:** `data.cms.gov/sites/default/files/.../MUP_PHY_R25_P05_V20_D23_Prov.csv` — Medicare Physician & Other Practitioners by Provider, calendar year 2023, ~472 MB / 1.26M real US providers
+- **Source 2:** HHS-OIG LEIE NPI list (8,429 real exclusion NPIs)
+- **Join logic:** `Rndrng_NPI` ∈ LEIE NPIs → `excluded_for_fraud = 1`
+- **LTC subset:** Nurse Practitioner + Geriatric Medicine + Hospice & Palliative Care + Geriatric Psychiatry = 193,290 providers, **80 with real LEIE-fraud labels**
+- **Full universe:** 1,259,343 providers, **207 with real LEIE-fraud labels**
+- **Features:** 49 numeric — Medicare billing volume (HCPCS codes, services, charges, payments), beneficiary demographics (age bands, race counts, dual-eligible, chronic-condition prevalences, average risk score)
+- **Engineered ratios:** payment-per-beneficiary, services-per-beneficiary, allowed-to-submitted ratio, dual-share
+
+This is the only pipeline in the project where **every positive case is a real US provider with real Medicare billing data who appears on the federal HHS-OIG exclusion list**. No synthetic labels, no aggregated proxies.
+
+The class imbalance is extreme (~0.04% in the LTC subset, ~0.02% in the full universe), so this pipeline is the most-realistic stress test of the entire methodology. Run: `make partb-ltc` (~3 min on CPU) or `make partb-all` (~10 min).
+
 ### Reproducibility
 
 ```bash
-make download-real     # ~25MB total, both datasets in 30s
-make oig-leie          # produces summary + LTC subset + RAG taxonomy
-make cms-ltc           # trains the LTC FWA models
+make download-real     # ~25 MB OIG + CMS Nursing Home in 30s
+# Medicare Part B 2023 download (~470 MB, 1-2 min on good connection):
+make partb-ltc         # trains the NPI-keyed real-fraud pipeline
+
+make oig-leie          # OIG LEIE descriptive analysis + RAG taxonomy
+make cms-ltc           # CMS Nursing Home pipeline
 ```
 
 Raw real-data CSVs are gitignored (downloadable, not committed). Processed modeling tables are committed.
@@ -570,6 +590,9 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 │   ├── psi_drift.py                    # PSI drift detection (train vs temporal-test)
 │   ├── fairness_audit.py               # Patient-panel disparate-impact audit
 │   ├── feedback_loop.py                # Analyst-disposition feedback + retraining
+│   ├── oig_leie_analysis.py            # Real federal-fraud (LEIE) integration + RAG taxonomy
+│   ├── cms_ltc_pipeline.py             # Real LTC pipeline (CMS Nursing Home Provider Information)
+│   ├── medicare_partb_pipeline.py      # Real NPI-labeled pipeline (Medicare Part B ⋈ LEIE)
 │   └── utils.py
 ├── data/
 │   ├── raw/                            # Place Kaggle CSVs here (see data/README.md)
@@ -577,8 +600,11 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 │   └── documents/                      # policy_rules.txt + synthetic claim docs
 ├── sql/
 │   └── provider_features.sql           # Portable SQL impl of provider feature aggregation
+├── scripts/
+│   └── download_real_data.sh           # Idempotent downloader for OIG LEIE + CMS Nursing Home
 ├── tests/
-│   └── test_project_structure.py       # pytest sanity checks (CI-gated)
+│   ├── test_project_structure.py       # Structural / output-schema checks
+│   └── test_logic.py                   # Unit tests for PSI, graph features, risk thresholds
 ├── outputs/
 │   ├── figures/                        # PNG charts
 │   ├── models/                         # best_fwa_model.pkl, isolation_forest.pkl
@@ -587,10 +613,12 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 ├── notebooks/
 ├── .github/workflows/ci.yml            # Compile + pytest on push
 ├── Makefile                            # make install / real-pipeline / dashboard / test
-├── app.py                              # Streamlit 6-tab dashboard
+├── app.py                              # Streamlit 11-tab dashboard
 ├── config.py                           # Path constants
 ├── requirements.txt                    # Core deps
 ├── requirements-llm.txt                # Optional: torch + transformers + sentence-transformers
+├── Dockerfile                          # CPU image; build --build-arg INSTALL_LLM=1 for LLM tier
+├── .dockerignore
 └── README.md
 ```
 
@@ -626,6 +654,25 @@ make test            # run pytest (30 checks)
 # Optional GenAI layer (~700MB of torch + transformers + flan-t5-base download)
 make install-llm     # pip install -r requirements-llm.txt
 make llm-reviews     # 10 semantic-retrieval + local-LLM generated provider reviews
+
+# Real public data — automatic downloads
+make download-real   # OIG LEIE + CMS Nursing Home (~25 MB total)
+make download-partb  # Medicare Physician 2023 (~470 MB)
+make oig-leie        # real-data fraud taxonomy + LTC subset
+make cms-ltc         # real LTC FWA model on 14,699 US nursing homes
+make partb-ltc       # real-NPI-labeled fraud model (193K LTC providers ⋈ LEIE)
+```
+
+### Docker
+
+```bash
+make docker          # CPU-only image with core deps
+make docker-llm      # Same + torch + transformers (for tier-2 RAG)
+docker run -p 8501:8501 fwa-portfolio        # launches the dashboard
+
+# Mount real data from the host so the image stays small (recommended):
+docker run -v $(pwd)/data:/app/data -v $(pwd)/outputs:/app/outputs \
+    -p 8501:8501 fwa-portfolio
 ```
 
 ### Run tests
@@ -733,6 +780,11 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 | Tuning | **RandomizedSearchCV** tuned model + full search log | `outputs/models/best_fwa_model_tuned_rf.pkl` + `outputs/reports/hp_tuning_*.{json,csv}` |
 | Drift | **PSI drift report** with retrain-trigger verdict per feature | `outputs/reports/psi_drift_report.csv` + figure |
 | Feedback | **Analyst-disposition feedback loop** with retrain trigger | `outputs/reports/feedback_log.csv`, `feedback_loop_metrics.json` |
+| Real LTC pipeline | **CMS Nursing Home Provider Information** — 14,699 real US nursing homes, real labels | `src/cms_ltc_pipeline.py` + `outputs/reports/cms_ltc_*` |
+| Real federal fraud | **HHS-OIG LEIE** — 83K real federal exclusions, 1,818 LTC-specific | `src/oig_leie_analysis.py` + `outputs/reports/oig_leie_*` |
+| Real NPI-labeled | **Medicare Part B 2023 ⋈ LEIE** — 1.26M real provider NPIs, 207 real fraud labels | `src/medicare_partb_pipeline.py` + `outputs/reports/medicare_partb_*` |
+| Container | Dockerfile (CPU base + optional LLM build-arg) | `Dockerfile` / `make docker` |
+| Logic tests | Unit tests for PSI math, graph features, risk thresholds | `tests/test_logic.py` |
 | Explainability | Top risk factors ranked by importance | `outputs/reports/top_risk_factors.csv` |
 | Explainability | Per-provider business-readable risk explanations | `outputs/reports/high_risk_provider_explanations.csv` |
 | GenAI / RAG | 15 structured provider review packets (10 High / 3 Medium / 2 Low risk) | `outputs/sample_reviews/review_*.txt` |

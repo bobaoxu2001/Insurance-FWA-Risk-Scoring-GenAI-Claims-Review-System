@@ -1,0 +1,31 @@
+{
+  "_data_source": "real_medicare_partb_2023_xref_oig_leie",
+  "_population": "ltc",
+  "_n_providers": 193290,
+  "_n_positive": 25,
+  "_positive_rate_pct": 0.0129,
+  "_label": "excluded_for_fraud = NPI \u2208 HHS-OIG LEIE",
+  "_best_model": "RandomForest",
+  "_n_features": 54,
+  "LogisticRegression": {
+    "roc_auc": 0.8125,
+    "pr_auc": 0.0005,
+    "precision": 0.0005,
+    "recall": 0.4,
+    "f1": 0.001
+  },
+  "RandomForest": {
+    "roc_auc": 0.8457,
+    "pr_auc": 0.0007,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "GradientBoosting": {
+    "roc_auc": 0.7831,
+    "pr_auc": 0.0004,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  }
+}

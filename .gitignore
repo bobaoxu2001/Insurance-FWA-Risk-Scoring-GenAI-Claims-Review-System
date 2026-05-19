@@ -17,10 +17,12 @@ data/raw/Test_Inpatientdata-*.csv
 data/raw/Test_Outpatientdata-*.csv
 data/raw/Test-*.csv
 
-# Real public datasets (downloadable via scripts/download_real_data.sh)
+# Real public datasets (downloadable via scripts/download_real_data.sh and make download-partb)
 data/raw/oig/*.csv
 data/raw/cms/*.csv
+data/raw/cms_partb/*.csv
 
 # Keep the processed modeling tables (small, derived, no raw PII)
 !data/processed/provider_modeling_table.csv
 !data/processed/cms_ltc_modeling_table.csv
+!data/processed/medicare_partb_modeling_table.csv
