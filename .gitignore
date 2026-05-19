@@ -5,3 +5,17 @@ __pycache__/
 venv/
 .DS_Store
 *.pyc
+
+# Raw Kaggle dataset files (large; download separately from Kaggle)
+# See data/README.md for download instructions
+data/raw/Train_Beneficiarydata-*.csv
+data/raw/Train_Inpatientdata-*.csv
+data/raw/Train_Outpatientdata-*.csv
+data/raw/Train-*.csv
+data/raw/Test_Beneficiarydata-*.csv
+data/raw/Test_Inpatientdata-*.csv
+data/raw/Test_Outpatientdata-*.csv
+data/raw/Test-*.csv
+
+# Keep the processed provider modeling table (small, derived, no raw PII)
+!data/processed/provider_modeling_table.csv

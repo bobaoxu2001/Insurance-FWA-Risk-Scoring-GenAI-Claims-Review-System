@@ -1,0 +1,57 @@
+
+==================================================================
+HEALTHCARE PROVIDER FWA REVIEW REPORT  (AI-assisted, human-in-the-loop)
+==================================================================
+Provider ID              : PRV51281
+Risk Level               : LOW
+Model Risk Score         : 0.0000
+Total Claims             : 259
+Inpatient Claims         : 0
+Outpatient Claims        : 259
+Inpatient Ratio          : 0.00%
+Unique Beneficiaries     : 200
+Avg Reimbursement/Claim  : $345.44
+Total Reimbursed         : $89,470.00
+Avg Chronic Conditions   : 4.04
+Avg Admission Duration   : N/A days
+
+------------------------------------------------------------------
+KEY RISK INDICATORS
+------------------------------------------------------------------
+  - Provider submitted 259 total claims — above the 90th-percentile volume threshold (228 claims)
+
+------------------------------------------------------------------
+RETRIEVED POLICY / AUDIT EVIDENCE  (TF-IDF cosine similarity)
+------------------------------------------------------------------
+Query: "healthcare provider billing fraud waste abuse audit review"
+
+  [1] (similarity=0.307) 1. FRAUD, WASTE, AND ABUSE (FWA) DEFINITIONS    1.1 Fraud: Intentional deception or misrepresentation to obtain unauthorized benefit.    1.2 Waste: Overutilization of services not caused by criminally negligent actions.    1.3 Abuse: Actions inconsistent with sound fiscal, busine...
+  [2] (similarity=0.189) 7. ANOMALY THRESHOLDS    7.1 Provider billing volume >2 standard deviations above peer group: requires review.    7.2 Beneficiary with >15 claims per year: requires utilization management review.    7.3 Late submissions (>90 days): require clinical justification.    7.4 Approval ...
+  [3] (similarity=0.101) 3. BILLING GUIDELINES    3.1 Unbundling: Billing separately for services that should be billed together is prohibited.    3.2 Upcoding: Billing for a higher-intensity service than provided is prohibited.    3.3 Phantom billing: Billing for services not rendered is prohibited.    ...
+
+------------------------------------------------------------------
+DATA & DOCUMENTATION GAPS
+------------------------------------------------------------------
+  - No automated documentation gaps identified; standard audit sampling applies
+
+------------------------------------------------------------------
+SUGGESTED ANALYST ACTION
+------------------------------------------------------------------
+STANDARD PROCESSING.  Include provider in next routine audit sample (10% sampling).
+
+------------------------------------------------------------------
+HUMAN REVIEW NOTES  (what an analyst should verify)
+------------------------------------------------------------------
+  - Verify provider NPI is active and not on the OIG exclusion list
+  - Cross-check billed CPT codes against CMS peer-group norms for this specialty
+  - Confirm all attending physicians billed under this NPI are independently enrolled
+
+------------------------------------------------------------------
+SYSTEM LIMITATIONS & DATA DISCLAIMER
+------------------------------------------------------------------
+  - Data source: Kaggle Healthcare Provider Fraud Detection Analysis (public educational dataset).
+  - NOT Manulife / John Hancock data.  NOT Long Term Care-specific data.
+  - No real patient records, clinical documents, or claim notes are used.
+  - RAG policy text is synthetic.  TF-IDF retrieval may miss semantically relevant rules.
+  - All HIGH-risk flags require a licensed analyst review before any payment action.
+==================================================================

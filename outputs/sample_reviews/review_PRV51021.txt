@@ -1,0 +1,59 @@
+
+==================================================================
+HEALTHCARE PROVIDER FWA REVIEW REPORT  (AI-assisted, human-in-the-loop)
+==================================================================
+Provider ID              : PRV51021
+Risk Level               : MEDIUM
+Model Risk Score         : 0.4262
+Total Claims             : 257
+Inpatient Claims         : 29
+Outpatient Claims        : 228
+Inpatient Ratio          : 11.28%
+Unique Beneficiaries     : 210
+Avg Reimbursement/Claim  : $1,357.32
+Total Reimbursed         : $348,830.00
+Avg Chronic Conditions   : 5.29
+Avg Admission Duration   : 4.8 days
+
+------------------------------------------------------------------
+KEY RISK INDICATORS
+------------------------------------------------------------------
+  - Avg reimbursement per claim ($1,357) is 3.8x the overall provider median ($356)
+  - Provider submitted 257 total claims — above the 90th-percentile volume threshold (228 claims)
+  - Reimbursement per beneficiary ($1,661) is 3.1x median — unusually high revenue per patient
+
+------------------------------------------------------------------
+RETRIEVED POLICY / AUDIT EVIDENCE  (TF-IDF cosine similarity)
+------------------------------------------------------------------
+Query: "multiple physicians billing under same provider identity"
+
+  [1] (similarity=0.160) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW    6.1 Claim amount exceeds 200% of provider's average claim amount.    6.2 More than 3 claims from same provider-beneficiary pair within 30 days.    6.3 Services billed on weekends or holidays for non-emergency care.    6.4 Speci...
+  [2] (similarity=0.160) 3. BILLING GUIDELINES    3.1 Unbundling: Billing separately for services that should be billed together is prohibited.    3.2 Upcoding: Billing for a higher-intensity service than provided is prohibited.    3.3 Phantom billing: Billing for services not rendered is prohibited.    ...
+  [3] (similarity=0.122) 7. ANOMALY THRESHOLDS    7.1 Provider billing volume >2 standard deviations above peer group: requires review.    7.2 Beneficiary with >15 claims per year: requires utilization management review.    7.3 Late submissions (>90 days): require clinical justification.    7.4 Approval ...
+
+------------------------------------------------------------------
+DATA & DOCUMENTATION GAPS
+------------------------------------------------------------------
+  - High number of attending physicians billed under this provider NPI — verify all physicians are credentialed and enrolled
+
+------------------------------------------------------------------
+SUGGESTED ANALYST ACTION
+------------------------------------------------------------------
+ENHANCED REVIEW within 5 business days.  Pull provider-level claim detail and cross-check with peer-provider benchmarks.  Do not suspend unless additional red flags are found.
+
+------------------------------------------------------------------
+HUMAN REVIEW NOTES  (what an analyst should verify)
+------------------------------------------------------------------
+  - Verify provider NPI is active and not on the OIG exclusion list
+  - Cross-check billed CPT codes against CMS peer-group norms for this specialty
+  - Confirm all attending physicians billed under this NPI are independently enrolled
+
+------------------------------------------------------------------
+SYSTEM LIMITATIONS & DATA DISCLAIMER
+------------------------------------------------------------------
+  - Data source: Kaggle Healthcare Provider Fraud Detection Analysis (public educational dataset).
+  - NOT Manulife / John Hancock data.  NOT Long Term Care-specific data.
+  - No real patient records, clinical documents, or claim notes are used.
+  - RAG policy text is synthetic.  TF-IDF retrieval may miss semantically relevant rules.
+  - All HIGH-risk flags require a licensed analyst review before any payment action.
+==================================================================

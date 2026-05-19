@@ -1,0 +1,62 @@
+
+==================================================================
+HEALTHCARE PROVIDER FWA REVIEW REPORT  (AI-assisted, human-in-the-loop)
+==================================================================
+Provider ID              : PRV51940
+Risk Level               : HIGH
+Model Risk Score         : 0.9990
+Total Claims             : 251
+Inpatient Claims         : 193
+Outpatient Claims        : 58
+Inpatient Ratio          : 76.89%
+Unique Beneficiaries     : 227
+Avg Reimbursement/Claim  : $7,937.33
+Total Reimbursed         : $1,992,270.00
+Avg Chronic Conditions   : 4.96
+Avg Admission Duration   : 5.8 days
+
+------------------------------------------------------------------
+KEY RISK INDICATORS
+------------------------------------------------------------------
+  - Avg reimbursement per claim ($7,937) is 22.3x the overall provider median ($356)
+  - Inpatient billing ratio (76.89%) exceeds the 90th percentile (57.70%) — potential upcoding to higher-cost inpatient setting
+  - Provider submitted 251 total claims — above the 90th-percentile volume threshold (228 claims)
+  - Reimbursement per beneficiary ($8,777) is 16.2x median — unusually high revenue per patient
+
+------------------------------------------------------------------
+RETRIEVED POLICY / AUDIT EVIDENCE  (TF-IDF cosine similarity)
+------------------------------------------------------------------
+Query: "claim reimbursement amount exceeds provider average upcoding"
+
+  [1] (similarity=0.286) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW    6.1 Claim amount exceeds 200% of provider's average claim amount.    6.2 More than 3 claims from same provider-beneficiary pair within 30 days.    6.3 Services billed on weekends or holidays for non-emergency care.    6.4 Speci...
+  [2] (similarity=0.061) 5. PROVIDER ELIGIBILITY    5.1 Providers must maintain active licensure in the state of service.    5.2 Excluded providers (OIG exclusion list) may not submit claims.    5.3 Provider credentialing must be current and verified annually....
+  [3] (similarity=0.052) 7. ANOMALY THRESHOLDS    7.1 Provider billing volume >2 standard deviations above peer group: requires review.    7.2 Beneficiary with >15 claims per year: requires utilization management review.    7.3 Late submissions (>90 days): require clinical justification.    7.4 Approval ...
+
+------------------------------------------------------------------
+DATA & DOCUMENTATION GAPS
+------------------------------------------------------------------
+  - No automated documentation gaps identified; standard audit sampling applies
+
+------------------------------------------------------------------
+SUGGESTED ANALYST ACTION
+------------------------------------------------------------------
+SUSPEND PAYMENT for this provider pending senior-analyst review.  Request complete billing records, physician attestations, and patient-level claim detail for the last 12 months.  Escalate to SIU if pattern is confirmed.
+
+------------------------------------------------------------------
+HUMAN REVIEW NOTES  (what an analyst should verify)
+------------------------------------------------------------------
+  - Verify provider NPI is active and not on the OIG exclusion list
+  - Cross-check billed CPT codes against CMS peer-group norms for this specialty
+  - Confirm all attending physicians billed under this NPI are independently enrolled
+  - Pull individual claim lines for the top 5 highest-reimbursement claims and request supporting clinical documentation
+  - Check for overlapping inpatient/outpatient claims on the same beneficiary on the same date
+
+------------------------------------------------------------------
+SYSTEM LIMITATIONS & DATA DISCLAIMER
+------------------------------------------------------------------
+  - Data source: Kaggle Healthcare Provider Fraud Detection Analysis (public educational dataset).
+  - NOT Manulife / John Hancock data.  NOT Long Term Care-specific data.
+  - No real patient records, clinical documents, or claim notes are used.
+  - RAG policy text is synthetic.  TF-IDF retrieval may miss semantically relevant rules.
+  - All HIGH-risk flags require a licensed analyst review before any payment action.
+==================================================================
