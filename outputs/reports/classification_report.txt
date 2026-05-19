@@ -1,0 +1,12 @@
+Classification report — best model: RandomForest
+Data source: real_kaggle_provider
+Test set size: 1082  Fraud rate: 0.0933
+============================================================
+              precision    recall  f1-score   support
+
+       Legit     0.9693    0.9664    0.9678       981
+       Fraud     0.6827    0.7030    0.6927       101
+
+    accuracy                         0.9418      1082
+   macro avg     0.8260    0.8347    0.8303      1082
+weighted avg     0.9426    0.9418    0.9422      1082

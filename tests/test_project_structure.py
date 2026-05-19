@@ -74,6 +74,65 @@ def test_real_kaggle_metrics_sanity() -> None:
     )
 
 
+def test_metrics_schema_completeness() -> None:
+    """Every model entry should carry the full new metric schema:
+    test-set ranking (roc_auc, pr_auc), classification (precision, recall, f1),
+    calibration (brier, log_loss), and 5-fold CV (cv_auc_mean, cv_auc_std)."""
+    p = _metrics_path()
+    if not p.is_file():
+        pytest.skip("model_metrics.json absent")
+    with p.open() as f:
+        data = json.load(f)
+
+    required = {
+        "roc_auc", "pr_auc", "precision", "recall", "f1",
+        "brier", "log_loss", "cv_auc_mean", "cv_auc_std",
+    }
+    model_entries = {k: v for k, v in data.items()
+                     if not k.startswith("_") and isinstance(v, dict)}
+    assert model_entries, "Expected at least one model entry"
+    for name, m in model_entries.items():
+        missing = required - set(m.keys())
+        assert not missing, f"{name} missing metric fields: {sorted(missing)}"
+        # CV std should be small relative to the mean (sanity: not exploding)
+        assert m["cv_auc_std"] < 0.10, (
+            f"{name} CV-AUC std ({m['cv_auc_std']}) suggests unstable model"
+        )
+
+
+def test_evaluation_block_present() -> None:
+    """Metrics JSON should carry the _evaluation provenance block."""
+    p = _metrics_path()
+    if not p.is_file():
+        pytest.skip("model_metrics.json absent")
+    with p.open() as f:
+        data = json.load(f)
+    assert "_evaluation" in data, "Missing _evaluation block"
+    ev = data["_evaluation"]
+    for key in ("test_split", "cv_scheme", "selection_metric", "best_model"):
+        assert key in ev, f"_evaluation missing field: {key}"
+
+
+def test_classification_report_exists() -> None:
+    """classification_report.txt should be saved alongside metrics."""
+    p = REPO_ROOT / "outputs" / "reports" / "classification_report.txt"
+    if not p.is_file():
+        pytest.skip("classification_report.txt not generated yet")
+    body = p.read_text()
+    # sklearn classification_report always emits these tokens
+    for token in ("precision", "recall", "f1-score", "Fraud"):
+        assert token in body, f"classification_report.txt missing token: {token}"
+
+
+def test_calibration_figure_exists() -> None:
+    """Reliability diagram should exist after a full modeling run."""
+    p = REPO_ROOT / "outputs" / "figures" / "calibration_curve.png"
+    if not p.is_file():
+        pytest.skip("calibration_curve.png not generated yet")
+    # PNG magic bytes
+    assert p.read_bytes()[:4] == b"\x89PNG", "calibration_curve.png is not a valid PNG"
+
+
 # ── Top risk factors ───────────────────────────────────────────────────────────
 
 

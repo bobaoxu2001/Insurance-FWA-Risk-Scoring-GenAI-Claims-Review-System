@@ -44,14 +44,24 @@ Full pipeline run on the **Kaggle Healthcare Provider Fraud Detection Analysis**
 | Train_Outpatientdata | 517,737 claims | — | — |
 | **Provider table (processed)** | **5,410 providers** | **27** | **9.35% (506 fraudulent)** |
 
-**Model performance on held-out test set (80/20 stratified split):**
+**Model performance — held-out 80/20 stratified test set:**
 
-| Model | ROC-AUC | F1 | Recall | Precision |
-|---|---|---|---|---|
-| **Random Forest** ⭐ | **0.9535** | **0.6927** | **0.7030** | 0.6828 |
-| Gradient Boosting | 0.9489 | 0.6413 | 0.5842 | 0.7115 |
-| Logistic Regression | 0.9062 | 0.4821 | 0.8020 | 0.3447 |
-| Isolation Forest | anomaly scoring | — | — | — |
+| Model | ROC-AUC | PR-AUC | F1 | Recall | Precision | Brier | Log-loss |
+|---|---|---|---|---|---|---|---|
+| **Random Forest** ⭐ | **0.9535** | **0.7290** | **0.6927** | **0.7030** | 0.6828 | **0.0411** | 0.1957 |
+| Gradient Boosting | 0.9489 | 0.6752 | 0.6413 | 0.5842 | 0.7108 | 0.0443 | **0.1644** |
+| Logistic Regression | 0.9062 | 0.6378 | 0.4821 | 0.8020 | 0.3447 | 0.1429 | 0.5119 |
+| Isolation Forest | anomaly scoring | — | — | — | — | — | — |
+
+**5-fold stratified cross-validation** (full dataset, scoring = ROC-AUC):
+
+| Model | CV-AUC (mean ± std) | Per-fold AUC |
+|---|---|---|
+| **Random Forest** ⭐ | **0.9498 ± 0.0142** | 0.963, 0.961, 0.949, 0.923, 0.954 |
+| Gradient Boosting | 0.9533 ± 0.0139 | 0.966, 0.964, 0.959, 0.928, 0.950 |
+| Logistic Regression | 0.8959 ± 0.0128 | 0.911, 0.909, 0.882, 0.880, 0.898 |
+
+Random Forest is selected as the production model by **PR-AUC on the held-out set** (the imbalance-aware metric). Gradient Boosting has a slightly higher mean CV-AUC but lower PR-AUC and lower test-set recall, so RF wins the recall-oriented tradeoff that matters for fraud detection.
 
 **Top 5 features by Random Forest importance:**
 
@@ -63,7 +73,7 @@ Full pipeline run on the **Kaggle Healthcare Provider Fraud Detection Analysis**
 | 4 | `total_inpatient_reimbursed` | 0.075 |
 | 5 | `inpatient_claim_count` | 0.062 |
 
-> Metrics JSON (`outputs/reports/model_metrics.json`) is annotated with `"_data_source": "real_kaggle_provider"` so any consumer can verify which run produced the numbers.
+> All metrics serialized to `outputs/reports/model_metrics.json` with `"_data_source": "real_kaggle_provider"` and an `_evaluation` block documenting the test split, CV scheme, and selection metric. Classification report saved to `outputs/reports/classification_report.txt`. Calibration plot at `outputs/figures/calibration_curve.png`.
 
 ---
 
@@ -247,16 +257,24 @@ Class imbalance is handled with `class_weight="balanced"` for supervised models 
 
 ## 11. Model Evaluation
 
-Reported metrics on held-out test set (80/20 stratified split):
+Two-stage evaluation guards against split-of-the-day artifacts:
 
-| Metric | Why it matters for FWA |
-|---|---|
-| ROC-AUC | Overall ranking quality across all thresholds |
-| PR-AUC (Average Precision) | More informative than AUC under class imbalance |
-| Precision @ threshold | False positive rate → analyst capacity |
-| Recall @ threshold | Fraud catch rate → financial exposure |
-| F1 @ threshold | Balanced summary |
-| Threshold sweep table | Operations teams pick based on reviewer capacity |
+1. **Held-out 80/20 stratified test set** — for the headline operating-point metrics (P/R/F1, calibration).
+2. **5-fold stratified cross-validation** on the full dataset — for a stability estimate (mean ± std ROC-AUC).
+
+Per-model metrics persisted to `outputs/reports/model_metrics.json`:
+
+| Metric | What it measures | Why it matters for FWA |
+|---|---|---|
+| ROC-AUC | Ranking quality across all thresholds | Overall separability |
+| **PR-AUC** | Area under precision-recall curve | More informative than ROC under class imbalance — used for model selection |
+| Precision @ threshold | True flagged / total flagged | Analyst capacity / false-positive cost |
+| Recall @ threshold | True flagged / total fraud | Fraud catch rate / financial exposure |
+| F1 @ threshold | Harmonic mean of P and R | Balanced summary |
+| **Brier score** | Mean squared probability error | Calibration of the predicted probabilities |
+| **Log-loss** | Cross-entropy | Calibration + ranking combined |
+| **CV-AUC (mean ± std)** | Stability across 5 folds | Detects overfit to a lucky split |
+| Threshold sweep table | P/R/F1/n_flagged across 0.05–0.95 | Operations picks threshold by reviewer capacity |
 
 See **Section 2 — Real Dataset Results** above for headline numbers from the Kaggle pipeline.
 
@@ -476,9 +494,10 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 | Data | Provider-level modeling table (5,410 providers × 27 features + label) | `data/processed/provider_modeling_table.csv` |
 | Data | Portable SQL reference for the provider feature aggregation | `sql/provider_features.sql` |
 | Modeling | Trained best model (Random Forest) + Isolation Forest anomaly model | `outputs/models/best_fwa_model.pkl`, `isolation_forest.pkl` |
-| Modeling | Model metrics JSON (ROC-AUC, PR-AUC, precision, recall, F1 per model) | `outputs/reports/model_metrics.json` |
+| Modeling | Model metrics JSON (ROC-AUC, PR-AUC, P/R/F1, Brier, log-loss, 5-fold CV) | `outputs/reports/model_metrics.json` |
+| Modeling | sklearn classification report for the best model | `outputs/reports/classification_report.txt` |
 | Modeling | Threshold sweep analysis (0.05 → 0.95 with precision/recall/F1/n_flagged) | `outputs/reports/threshold_analysis.csv` |
-| Modeling | ROC curve, precision-recall curve, confusion matrix, feature importance | `outputs/figures/*.png` |
+| Modeling | ROC, precision-recall, **calibration**, confusion matrix, feature importance | `outputs/figures/*.png` |
 | Explainability | Top risk factors ranked by importance | `outputs/reports/top_risk_factors.csv` |
 | Explainability | Per-provider business-readable risk explanations | `outputs/reports/high_risk_provider_explanations.csv` |
 | GenAI / RAG | 15 structured provider review packets (10 High / 3 Medium / 2 Low risk) | `outputs/sample_reviews/review_*.txt` |

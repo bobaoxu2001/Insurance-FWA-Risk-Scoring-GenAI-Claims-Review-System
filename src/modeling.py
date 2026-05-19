@@ -26,9 +26,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, IsolationForest
 from sklearn.metrics import (
     roc_auc_score, precision_score, recall_score, f1_score,
-    confusion_matrix, roc_curve, precision_recall_curve, average_precision_score
+    confusion_matrix, roc_curve, precision_recall_curve, average_precision_score,
+    brier_score_loss, log_loss, classification_report
 )
-from sklearn.model_selection import cross_val_score
+from sklearn.calibration import calibration_curve
+from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.inspection import permutation_importance
 
 try:
@@ -136,7 +138,8 @@ def train_models(X_train, y_train):
 
     print("  Training Logistic Regression...")
     lr = LogisticRegression(
-        class_weight="balanced", max_iter=1000, random_state=config.RANDOM_SEED
+        class_weight="balanced", max_iter=2000, solver="liblinear",
+        random_state=config.RANDOM_SEED
     )
     lr.fit(X_train, y_train)
     models["LogisticRegression"] = lr
@@ -187,6 +190,8 @@ def train_anomaly_detector(X_train):
 # ──────────────────────────────────────────────────────────────────────────────
 
 def evaluate_models(models, X_test, y_test):
+    """Test-set evaluation: ranking (AUC, PR-AUC), classification (P/R/F1),
+    and calibration (Brier, log-loss) metrics."""
     metrics = {}
     for name, model in models.items():
         y_pred = model.predict(X_test)
@@ -194,19 +199,50 @@ def evaluate_models(models, X_test, y_test):
 
         metrics[name] = {
             "roc_auc":   round(roc_auc_score(y_test, y_prob), 4),
+            "pr_auc":    round(average_precision_score(y_test, y_prob), 4),
             "precision": round(precision_score(y_test, y_pred, zero_division=0), 4),
             "recall":    round(recall_score(y_test, y_pred, zero_division=0), 4),
             "f1":        round(f1_score(y_test, y_pred, zero_division=0), 4),
+            "brier":     round(brier_score_loss(y_test, y_prob), 4),
+            "log_loss":  round(log_loss(y_test, y_prob, labels=[0, 1]), 4),
         }
         print(f"  {name}: AUC={metrics[name]['roc_auc']:.4f}  "
+              f"PR-AUC={metrics[name]['pr_auc']:.4f}  "
               f"F1={metrics[name]['f1']:.4f}  "
-              f"Recall={metrics[name]['recall']:.4f}")
+              f"Brier={metrics[name]['brier']:.4f}")
     return metrics
 
 
+def cross_validate_models(models, X, y, n_splits=5):
+    """Stratified k-fold CV on the FULL dataset, scored by ROC-AUC.
+    Returns {model_name: {cv_auc_mean, cv_auc_std, cv_auc_folds}}."""
+    print(f"\nRunning {n_splits}-fold stratified cross-validation (scoring=roc_auc)...")
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=config.RANDOM_SEED)
+    cv_results = {}
+    for name, model in models.items():
+        # Refit a clean clone for CV (avoid mutating the train-set-fit model)
+        from sklearn.base import clone
+        scores = cross_val_score(
+            clone(model), X, y, cv=skf, scoring="roc_auc", n_jobs=-1
+        )
+        cv_results[name] = {
+            "cv_auc_mean":  round(float(np.mean(scores)), 4),
+            "cv_auc_std":   round(float(np.std(scores)),  4),
+            "cv_auc_folds": [round(float(s), 4) for s in scores],
+        }
+        print(f"  {name}: CV-AUC = {cv_results[name]['cv_auc_mean']:.4f} "
+              f"± {cv_results[name]['cv_auc_std']:.4f}  "
+              f"(folds: {cv_results[name]['cv_auc_folds']})")
+    return cv_results
+
+
 def select_best_model(models, metrics):
-    best_name = max(metrics, key=lambda n: metrics[n]["roc_auc"])
-    print(f"  Best model: {best_name} (AUC={metrics[best_name]['roc_auc']:.4f})")
+    """Select by held-out PR-AUC (more informative than ROC-AUC under imbalance).
+    Falls back to ROC-AUC if PR-AUC is missing."""
+    key = "pr_auc" if "pr_auc" in next(iter(metrics.values())) else "roc_auc"
+    best_name = max(metrics, key=lambda n: metrics[n][key])
+    print(f"  Best model (by {key}): {best_name} "
+          f"({key}={metrics[best_name][key]:.4f}, AUC={metrics[best_name]['roc_auc']:.4f})")
     return best_name, models[best_name]
 
 
@@ -300,6 +336,48 @@ def plot_precision_recall(models, X_test, y_test):
     print(f"  Saved threshold analysis (best={best_name}) to {thr_path}")
 
 
+def plot_calibration(models, X_test, y_test):
+    """Reliability diagram for all classifiers — diagnose over/under-confidence."""
+    os.makedirs(config.OUTPUTS_FIGURES, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(7, 6))
+    for name, model in models.items():
+        y_prob = model.predict_proba(X_test)[:, 1]
+        # Use quantile binning when the score distribution is skewed (most FWA models)
+        prob_true, prob_pred = calibration_curve(
+            y_test, y_prob, n_bins=10, strategy="quantile"
+        )
+        brier = brier_score_loss(y_test, y_prob)
+        ax.plot(prob_pred, prob_true, marker="o", lw=2,
+                label=f"{name} (Brier={brier:.3f})")
+    ax.plot([0, 1], [0, 1], "k--", lw=1, label="Perfectly calibrated")
+    ax.set_xlabel("Mean predicted probability")
+    ax.set_ylabel("Empirical fraud rate in bin")
+    ax.set_title("Reliability Diagram — Provider Fraud Probability Calibration")
+    ax.legend(loc="upper left")
+    plt.tight_layout()
+    path = os.path.join(config.OUTPUTS_FIGURES, "calibration_curve.png")
+    plt.savefig(path, dpi=120)
+    plt.close()
+    print(f"  Saved calibration curve to {path}")
+
+
+def save_classification_report(best_model, X_test, y_test, model_name):
+    """Persist sklearn classification_report for the best model."""
+    os.makedirs(config.OUTPUTS_REPORTS, exist_ok=True)
+    y_pred = best_model.predict(X_test)
+    report = classification_report(
+        y_test, y_pred, target_names=["Legit", "Fraud"], digits=4
+    )
+    path = os.path.join(config.OUTPUTS_REPORTS, "classification_report.txt")
+    with open(path, "w") as f:
+        f.write(f"Classification report — best model: {model_name}\n")
+        f.write(f"Data source: {_DATA_SOURCE}\n")
+        f.write(f"Test set size: {len(y_test)}  Fraud rate: {y_test.mean():.4f}\n")
+        f.write("=" * 60 + "\n")
+        f.write(report)
+    print(f"  Saved classification report to {path}")
+
+
 def plot_feature_importance(model, feature_cols, model_name):
     os.makedirs(config.OUTPUTS_FIGURES, exist_ok=True)
 
@@ -334,7 +412,7 @@ def plot_feature_importance(model, feature_cols, model_name):
 # Save
 # ──────────────────────────────────────────────────────────────────────────────
 
-def save_outputs(best_model, metrics, iso_forest):
+def save_outputs(best_model, metrics, iso_forest, cv_results=None, best_name=None):
     os.makedirs(config.OUTPUTS_MODELS, exist_ok=True)
     os.makedirs(config.OUTPUTS_REPORTS, exist_ok=True)
 
@@ -346,7 +424,14 @@ def save_outputs(best_model, metrics, iso_forest):
     joblib.dump(iso_forest, iso_path)
     print(f"  Saved Isolation Forest to {iso_path}")
 
-    # Annotate metrics with the data source used
+    # Merge CV results into per-model metric dicts so consumers see one record per model
+    merged = {}
+    for name, m in metrics.items():
+        merged[name] = dict(m)
+        if cv_results and name in cv_results:
+            merged[name].update(cv_results[name])
+
+    # Annotate with run metadata
     annotated = {
         "_data_source": _DATA_SOURCE,
         "_note": (
@@ -354,8 +439,14 @@ def save_outputs(best_model, metrics, iso_forest):
             if _DATA_SOURCE == "real_kaggle_provider"
             else "Metrics trained on SYNTHETIC demo data — not real insurance data"
         ),
+        "_evaluation": {
+            "test_split": "80/20 stratified",
+            "cv_scheme":  "5-fold StratifiedKFold on full dataset (scoring=roc_auc)",
+            "selection_metric": "PR-AUC on held-out test set",
+            "best_model": best_name,
+        },
     }
-    annotated.update(metrics)
+    annotated.update(merged)
 
     metrics_path = os.path.join(config.OUTPUTS_REPORTS, "model_metrics.json")
     with open(metrics_path, "w") as f:
@@ -379,8 +470,13 @@ def main():
     models = train_models(X_train, y_train)
     iso_forest = train_anomaly_detector(X_train)
 
-    print("\nEvaluating models on test set...")
+    print("\nEvaluating models on held-out test set...")
     metrics = evaluate_models(models, X_test, y_test)
+
+    # 5-fold stratified CV on the full dataset → guards against split-of-the-day
+    X_full = pd.concat([X_train, X_test])
+    y_full = pd.concat([y_train, y_test])
+    cv_results = cross_validate_models(models, X_full, y_full, n_splits=5)
 
     best_name, best_model = select_best_model(models, metrics)
 
@@ -388,9 +484,12 @@ def main():
     plot_confusion_matrix(best_model, X_test, y_test, best_name)
     plot_roc_curves(models, X_test, y_test)
     plot_precision_recall(models, X_test, y_test)
+    plot_calibration(models, X_test, y_test)
     plot_feature_importance(best_model, feature_cols, best_name)
 
-    save_outputs(best_model, metrics, iso_forest)
+    save_classification_report(best_model, X_test, y_test, best_name)
+    save_outputs(best_model, metrics, iso_forest,
+                 cv_results=cv_results, best_name=best_name)
     print("\nModeling complete.")
 
 
