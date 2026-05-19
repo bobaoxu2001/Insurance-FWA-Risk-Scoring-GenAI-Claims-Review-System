@@ -19,7 +19,6 @@ KEY RISK INDICATORS
   - Low documentation completeness score (0.35 / 1.00)
   - Submitted outside the 90-day window
   - 5 suspicious keywords detected in claim narrative
-  - Historical approval ratio low (0.23)
 
 ------------------------------------------------------------------
 RETRIEVED POLICY EVIDENCE  (TF-IDF cosine similarity)
@@ -57,6 +56,6 @@ LIMITATIONS
 ------------------------------------------------------------------
   - Data is fully synthetic; do NOT use any specific value as evidence of real fraud.
   - Model probabilities are calibrated only against the synthetic generating process.
-  - Retrieval is TF-IDF, not semantic — relevant policy text may be missed if vocabulary differs.
+  - Retrieval is TF-IDF, not semantic — relevant policy text may be missed.
   - All HIGH-risk recommendations require a licensed analyst before any payment action.
 ==================================================================

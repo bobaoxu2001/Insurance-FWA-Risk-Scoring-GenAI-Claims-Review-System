@@ -1,4 +1,6 @@
 {
+  "_data_source": "synthetic_claims_features",
+  "_note": "Metrics trained on SYNTHETIC demo data \u2014 not real insurance data",
   "LogisticRegression": {
     "roc_auc": 0.8171,
     "precision": 0.3529,

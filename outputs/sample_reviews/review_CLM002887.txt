@@ -2,35 +2,37 @@
 ==================================================================
 INSURANCE FWA CLAIM REVIEW REPORT  (AI-assisted, human-in-the-loop)
 ==================================================================
-Claim ID         : CLM003366
+Claim ID         : CLM002887
 Risk Level       : HIGH
-Model Risk Score : 0.9382
-Service Type     : Outpatient
-Diagnosis Group  : Oncology
-Claim Amount     : $26,528.99
-Approved Amount  : $8,054.28
-Provider ID      : PR0210
-State            : NY
+Model Risk Score : 0.9280
+Service Type     : Pharmacy
+Diagnosis Group  : Diabetes
+Claim Amount     : $29,571.50
+Approved Amount  : $8,415.01
+Provider ID      : PR0098
+State            : GA
 
 ------------------------------------------------------------------
 KEY RISK INDICATORS
 ------------------------------------------------------------------
-  - Claim amount is 12.4x the provider's average billing
-  - Elevated prior claim history (18 claims)
+  - Claim amount is 10.1x the provider's average billing
+  - Submitted outside the 90-day window
+  - 3 suspicious keywords detected in claim narrative
 
 ------------------------------------------------------------------
 RETRIEVED POLICY EVIDENCE  (TF-IDF cosine similarity)
 ------------------------------------------------------------------
-Query: "claim amount exceeds provider average upcoding"
+Query: "late claim submission over 90 days suspicious keywords documentation fraud claim amount exceeds provider average upcoding pharmacy claim quantity dosage protocol"
 
-  [1] (similarity=0.334) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW    6.1 Claim amount exceeds 200% of provider's average claim amount.    6.2 More than 3 claims from same provider-beneficiary pair within 30 days.    6.3 Services billed on weekends or holidays for non-emergency care.    6.4 Speci...
-  [2] (similarity=0.057) 5. PROVIDER ELIGIBILITY    5.1 Providers must maintain active licensure in the state of service.    5.2 Excluded providers (OIG exclusion list) may not submit claims.    5.3 Provider credentialing must be current and verified annually....
-  [3] (similarity=0.049) 7. ANOMALY THRESHOLDS    7.1 Provider billing volume >2 standard deviations above peer group: requires review.    7.2 Beneficiary with >15 claims per year: requires utilization management review.    7.3 Late submissions (>90 days): require clinical justification.    7.4 Approval ...
+  [1] (similarity=0.310) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW    6.1 Claim amount exceeds 200% of provider's average claim amount.    6.2 More than 3 claims from same provider-beneficiary pair within 30 days.    6.3 Services billed on weekends or holidays for non-emergency care.    6.4 Speci...
+  [2] (similarity=0.137) 2. CLAIM SUBMISSION REQUIREMENTS    2.1 Claims must be submitted within 90 days of service date.    2.2 All claims require valid diagnosis codes (ICD-10) and procedure codes (CPT/HCPCS).    2.3 Duplicate claims for the same service, date, and beneficiary are prohibited.    2.4 Cl...
+  [3] (similarity=0.107) 7. ANOMALY THRESHOLDS    7.1 Provider billing volume >2 standard deviations above peer group: requires review.    7.2 Beneficiary with >15 claims per year: requires utilization management review.    7.3 Late submissions (>90 days): require clinical justification.    7.4 Approval ...
 
 ------------------------------------------------------------------
 DOCUMENTATION GAPS
 ------------------------------------------------------------------
-  - No documentation gaps detected by automated screen
+  - No clinical justification for >90-day submission delay
+  - Narrative contains language patterns flagged by NLP screen
 
 ------------------------------------------------------------------
 SUGGESTED ANALYST ACTION

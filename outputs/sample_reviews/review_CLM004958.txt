@@ -2,21 +2,20 @@
 ==================================================================
 INSURANCE FWA CLAIM REVIEW REPORT  (AI-assisted, human-in-the-loop)
 ==================================================================
-Claim ID         : CLM003366
+Claim ID         : CLM004958
 Risk Level       : HIGH
-Model Risk Score : 0.9382
+Model Risk Score : 0.9278
 Service Type     : Outpatient
-Diagnosis Group  : Oncology
-Claim Amount     : $26,528.99
-Approved Amount  : $8,054.28
-Provider ID      : PR0210
-State            : NY
+Diagnosis Group  : Other
+Claim Amount     : $14,740.27
+Approved Amount  : $6,753.22
+Provider ID      : PR0244
+State            : GA
 
 ------------------------------------------------------------------
 KEY RISK INDICATORS
 ------------------------------------------------------------------
-  - Claim amount is 12.4x the provider's average billing
-  - Elevated prior claim history (18 claims)
+  - Claim amount is 11.5x the provider's average billing
 
 ------------------------------------------------------------------
 RETRIEVED POLICY EVIDENCE  (TF-IDF cosine similarity)

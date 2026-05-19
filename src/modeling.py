@@ -1,6 +1,14 @@
 """
 Modeling module for FWA risk scoring.
 Trains supervised classifiers and anomaly detection, evaluates, and saves outputs.
+
+Data priority:
+  1. data/processed/provider_modeling_table.csv  (real Kaggle provider-level data)
+  2. data/processed/claims_features.csv          (synthetic claim-level features)
+  3. data/processed/claims_encoded.csv           (synthetic encoded)
+  4. data/raw/synthetic_claims.csv               (raw synthetic fallback)
+
+The saved metrics JSON includes a 'data_source' key indicating which was used.
 """
 
 import os
@@ -40,6 +48,8 @@ import config
 ID_LIKE_COLS = [
     "claim_id", "policyholder_id", "provider_id", "claim_date",
     "service_type", "diagnosis_group", "state",
+    # Provider-level id columns (Kaggle)
+    "Provider",
 ]
 
 # rule_based_risk_score is a hand-coded composite of other features and would
@@ -47,9 +57,25 @@ ID_LIKE_COLS = [
 # transparent baseline, but excluded from supervised model inputs.
 EXCLUDE_FROM_MODEL = ["rule_based_risk_score"]
 
+# Possible target column names
+TARGET_COLS = ["PotentialFraud", "fraud_label"]
 
-def _get_model_features(df, target="fraud_label"):
+# Track which data source was used (set by load_data)
+_DATA_SOURCE = "unknown"
+
+
+def _detect_target(df):
+    """Return the target column name found in df, or raise."""
+    for t in TARGET_COLS:
+        if t in df.columns:
+            return t
+    raise ValueError(f"No target column found. Tried: {TARGET_COLS}. Got: {list(df.columns)}")
+
+
+def _get_model_features(df, target=None):
     """Return only numeric, non-id feature columns."""
+    if target is None:
+        target = _detect_target(df)
     drop = ID_LIKE_COLS + [target] + EXCLUDE_FROM_MODEL
     feature_cols = [
         c for c in df.columns
@@ -59,25 +85,41 @@ def _get_model_features(df, target="fraud_label"):
 
 
 def load_data():
-    feat_path = os.path.join(config.DATA_PROCESSED, "claims_features.csv")
-    enc_path  = os.path.join(config.DATA_PROCESSED, "claims_encoded.csv")
-    raw_path  = os.path.join(config.DATA_RAW,       "synthetic_claims.csv")
+    global _DATA_SOURCE
+    provider_path = os.path.join(config.DATA_PROCESSED, "provider_modeling_table.csv")
+    feat_path     = os.path.join(config.DATA_PROCESSED, "claims_features.csv")
+    enc_path      = os.path.join(config.DATA_PROCESSED, "claims_encoded.csv")
+    raw_path      = os.path.join(config.DATA_RAW,       "synthetic_claims.csv")
 
-    for p in [feat_path, enc_path, raw_path]:
+    if os.path.exists(provider_path):
+        df = pd.read_csv(provider_path)
+        print(f"  Loaded REAL provider data from {provider_path}  shape={df.shape}")
+        _DATA_SOURCE = "real_kaggle_provider"
+        return df
+
+    for p, src in [(feat_path, "synthetic_claims_features"),
+                   (enc_path,  "synthetic_claims_encoded"),
+                   (raw_path,  "synthetic_claims_raw")]:
         if os.path.exists(p):
             df = pd.read_csv(p)
-            print(f"  Loaded data from {p}  shape={df.shape}")
+            print(f"  Loaded SYNTHETIC data from {p}  shape={df.shape}")
+            _DATA_SOURCE = src
             return df
 
-    raise FileNotFoundError("No processed data found. Run preprocessing first.")
+    raise FileNotFoundError(
+        "No processed data found.\n"
+        "  Real data:    run src/provider_feature_engineering.py first.\n"
+        "  Synthetic:    run src/synthetic_data_generation.py + src/preprocessing.py first."
+    )
 
 
 def prepare_features(df):
     from sklearn.model_selection import train_test_split
 
-    feature_cols = _get_model_features(df)
-    X = df[feature_cols].copy()
-    y = df["fraud_label"].copy()
+    target = _detect_target(df)
+    feature_cols = _get_model_features(df, target)
+    X = df[feature_cols].fillna(df[feature_cols].median(numeric_only=True)).copy()
+    y = df[target].copy()
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=config.RANDOM_SEED, stratify=y
@@ -304,9 +346,20 @@ def save_outputs(best_model, metrics, iso_forest):
     joblib.dump(iso_forest, iso_path)
     print(f"  Saved Isolation Forest to {iso_path}")
 
+    # Annotate metrics with the data source used
+    annotated = {
+        "_data_source": _DATA_SOURCE,
+        "_note": (
+            "Metrics trained on real Kaggle Healthcare Provider Fraud Detection dataset"
+            if _DATA_SOURCE == "real_kaggle_provider"
+            else "Metrics trained on SYNTHETIC demo data — not real insurance data"
+        ),
+    }
+    annotated.update(metrics)
+
     metrics_path = os.path.join(config.OUTPUTS_REPORTS, "model_metrics.json")
     with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=2)
+        json.dump(annotated, f, indent=2)
     print(f"  Saved metrics to {metrics_path}")
 
 
@@ -317,6 +370,8 @@ def save_outputs(best_model, metrics, iso_forest):
 def main():
     print("Running modeling pipeline...")
     df = load_data()
+    target = _detect_target(df)
+    print(f"  Target column: {target}  |  Data source: {_DATA_SOURCE}")
     X_train, X_test, y_train, y_test, feature_cols = prepare_features(df)
     print(f"  Train: {X_train.shape}  Test: {X_test.shape}  "
           f"Fraud rate (test): {y_test.mean():.2%}")

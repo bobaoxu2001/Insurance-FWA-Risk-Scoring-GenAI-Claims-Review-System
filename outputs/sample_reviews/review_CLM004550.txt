@@ -18,7 +18,6 @@ KEY RISK INDICATORS
   - Claim amount is 18.6x the provider's average billing
   - 3 suspicious keywords detected in claim narrative
   - Elevated prior claim history (17 claims)
-  - Historical approval ratio low (0.49)
 
 ------------------------------------------------------------------
 RETRIEVED POLICY EVIDENCE  (TF-IDF cosine similarity)
@@ -53,6 +52,6 @@ LIMITATIONS
 ------------------------------------------------------------------
   - Data is fully synthetic; do NOT use any specific value as evidence of real fraud.
   - Model probabilities are calibrated only against the synthetic generating process.
-  - Retrieval is TF-IDF, not semantic — relevant policy text may be missed if vocabulary differs.
+  - Retrieval is TF-IDF, not semantic — relevant policy text may be missed.
   - All HIGH-risk recommendations require a licensed analyst before any payment action.
 ==================================================================
