@@ -1,0 +1,8 @@
+metric,value
+Total exclusion records,83256
+Records with real NPI,8608
+Records without NPI,74648
+Unique excluded NPIs,8429
+Earliest exclusion year,1977
+Latest exclusion year,2026
+LTC-relevant records (HHA/SNF/Hospice/Nursing Firm),1818

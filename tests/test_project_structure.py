@@ -30,6 +30,9 @@ REQUIRED_SRC_FILES = [
     "src/psi_drift.py",             # PSI drift detection
     "src/fairness_audit.py",        # demographic disparate-impact check
     "src/feedback_loop.py",         # analyst-disposition retraining loop
+    "src/oig_leie_analysis.py",     # real federal exclusion data
+    "src/cms_ltc_pipeline.py",      # real CMS Nursing Home pipeline
+    "scripts/download_real_data.sh",
 ]
 
 REQUIRED_TOP_LEVEL = [
@@ -270,6 +273,69 @@ def test_feedback_loop_metrics_if_present() -> None:
         assert key in data, f"feedback metrics missing key: {key}"
     assert 0 <= data["precision_of_flag"] <= 1, \
         f"precision_of_flag out of [0,1]: {data['precision_of_flag']}"
+
+
+# ── Real-data artifacts (OIG LEIE + CMS Nursing Home) ─────────────────────────
+
+
+def test_oig_leie_summary_if_present() -> None:
+    p = REPO_ROOT / "outputs" / "reports" / "oig_leie_summary.csv"
+    if not p.is_file():
+        pytest.skip("OIG LEIE summary not generated yet")
+    import csv
+    with p.open() as f:
+        rows = list(csv.DictReader(f))
+    metrics = {r["metric"]: r["value"] for r in rows}
+    assert any("LTC-relevant" in m for m in metrics), \
+        "OIG LEIE summary should contain an LTC-relevant count"
+
+
+def test_oig_exclusion_codes_in_rag_corpus() -> None:
+    """The OIG LEIE analysis should have written real federal exclusion-code
+    definitions to data/documents/, where the RAG retriever picks them up."""
+    p = REPO_ROOT / "data" / "documents" / "oig_exclusion_codes.txt"
+    if not p.is_file():
+        pytest.skip("oig_exclusion_codes.txt not generated yet")
+    body = p.read_text()
+    # Should mention multiple real exclusion codes
+    assert "1128a1" in body and "1128b4" in body, \
+        "Exclusion-code taxonomy should cite §1128 authorities"
+    assert "Social Security Act" in body, \
+        "Should cite legal authority"
+
+
+def test_cms_ltc_metrics_if_present() -> None:
+    p = REPO_ROOT / "outputs" / "reports" / "cms_ltc_metrics.json"
+    if not p.is_file():
+        pytest.skip("CMS LTC metrics not generated yet")
+    with p.open() as f:
+        data = json.load(f)
+    assert data.get("_data_source") == "real_cms_nursing_home_compare", \
+        "CMS LTC metrics must declare real-CMS data source"
+    assert data["_n_providers"] >= 10000, \
+        f"Expected ~14,699 CMS providers, got {data.get('_n_providers')}"
+    # PR-AUC on real LTC data should be in a plausible band
+    model_entries = {k: v for k, v in data.items()
+                     if not k.startswith("_") and isinstance(v, dict)}
+    pr_aucs = [v["pr_auc"] for v in model_entries.values() if "pr_auc" in v]
+    assert pr_aucs, "no PR-AUC values in CMS LTC metrics"
+    assert 0.5 < max(pr_aucs) < 0.95, \
+        f"CMS LTC PR-AUC outside realistic band 0.5-0.95: {max(pr_aucs)}"
+
+
+def test_cms_leie_overlap_if_present() -> None:
+    p = REPO_ROOT / "outputs" / "reports" / "cms_ltc_leie_overlap.csv"
+    if not p.is_file():
+        pytest.skip("CMS-LEIE overlap not generated yet")
+    import csv
+    with p.open() as f:
+        rows = list(csv.DictReader(f))
+    # File should at least have the right schema even if 0 matches
+    if rows:
+        required = {"CMS Certification Number (CCN)", "Provider Name", "State",
+                    "Legal Business Name", "matched_leie"}
+        assert required <= set(rows[0].keys()), \
+            f"CMS-LEIE overlap missing columns: {required - set(rows[0].keys())}"
 
 
 # ── Top risk factors ───────────────────────────────────────────────────────────

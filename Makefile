@@ -1,8 +1,8 @@
 PYTHON ?= python3.11
 
-.PHONY: help install install-llm real-pipeline graph-features temporal-eval \
-        synthetic-demo fairness llm-reviews tune-rf psi feedback dashboard \
-        test clean-outputs
+.PHONY: help install install-llm download-real real-pipeline graph-features \
+        temporal-eval synthetic-demo fairness llm-reviews tune-rf tune-gb \
+        psi feedback oig-leie cms-ltc dashboard test clean-outputs
 
 help:
 	@echo "Available targets:"
@@ -10,8 +10,13 @@ help:
 	@echo "  Setup:"
 	@echo "    install          Install core Python dependencies"
 	@echo "    install-llm      Install optional LLM/semantic-retrieval deps"
+	@echo "    download-real    Download OIG LEIE + CMS Nursing Home data (~25MB total)"
 	@echo ""
-	@echo "  Pipelines:"
+	@echo "  Real-data pipelines:"
+	@echo "    oig-leie         Analyze 83K real federal-fraud exclusion records"
+	@echo "    cms-ltc          Train LTC FWA model on 14,699 real US nursing homes"
+	@echo ""
+	@echo "  Kaggle pipelines:"
 	@echo "    real-pipeline    Full pipeline on real Kaggle data (random 80/20 split)"
 	@echo "    graph-features   Add 5 bipartite-graph features to provider table"
 	@echo "    temporal-eval    Re-evaluate models with chronological train/test split"
@@ -34,6 +39,15 @@ install:
 
 install-llm:
 	$(PYTHON) -m pip install -r requirements-llm.txt
+
+download-real:
+	bash scripts/download_real_data.sh
+
+oig-leie:
+	$(PYTHON) src/oig_leie_analysis.py
+
+cms-ltc:
+	$(PYTHON) src/cms_ltc_pipeline.py
 
 real-pipeline:
 	$(PYTHON) src/data_ingestion.py

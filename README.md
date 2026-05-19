@@ -10,21 +10,31 @@
 
 ## TL;DR
 
-End-to-end provider-level healthcare FWA pipeline on the public Kaggle Healthcare Provider Fraud Detection dataset, with a real local-LLM audit-review layer, fairness audit, temporal-split validation, and a Streamlit analyst dashboard.
+Provider-level healthcare FWA pipeline trained on **three real public datasets**:
+
+| Dataset | Real? | What it gives us |
+|---|---|---|
+| Kaggle Healthcare Provider Fraud (Train) | Real Medicare claim structure, anonymized IDs | 5,410 providers × 32 features, 506 fraud labels |
+| **CMS Nursing Home Provider Information** | **Real LTC providers with real names + CCNs** | 14,699 US nursing homes, 22.55% flagged (abuse / SFF / fines / payment denials) |
+| **HHS-OIG List of Excluded Individuals/Entities** | **Real federal fraud exclusions** | 83,256 actual exclusions, 1,818 LTC-specific (1,447 HHA, 256 SNF, 77 Hospice) |
+
+Two complete modeling pipelines, real LTC fraud labels, cross-referenced via business-name matching, with semantic + LLM RAG, temporal validation, PSI drift, fairness audit, and reviewer-feedback loop.
+
+### Headline Numbers
 
 | | |
 |---|---|
-| **Data** | 558K+ inpatient/outpatient claims joined with 138K beneficiaries → **5,410 providers × 32 features** (27 aggregations + 5 graph) |
-| **Best model (random split)** | Random Forest — **ROC-AUC 0.9526** · **PR-AUC 0.7343** · F1 0.6731 · Brier 0.042 |
-| **Best model (temporal split)** | Gradient Boosting — **ROC-AUC 0.8899** · **PR-AUC 0.5529** — the realistic deployment number |
-| **Tuned (RF, 5-fold CV, PR-AUC)** | **0.7491** (Δ +0.015 vs default hyperparameters) |
-| **Drift** | PSI between train and test under temporal split: 13 / 32 features cross 0.25 threshold → would trigger retraining alert |
-| **Stability** | 5-fold stratified CV: 0.9499 ± 0.0145 (RF), 0.9525 ± 0.0138 (GB) |
-| **Selection metric** | PR-AUC on held-out test (imbalance-aware) |
+| **Kaggle pipeline (random split, RF)** | ROC-AUC **0.9526** · PR-AUC **0.7343** · F1 0.6731 · Brier 0.042 |
+| **Kaggle pipeline (temporal split, GB)** | ROC-AUC **0.8899** · PR-AUC **0.5529** — the realistic deployment number |
+| **CMS Nursing Home pipeline (GB)** | ROC-AUC **0.8538** · PR-AUC **0.6668** · CV PR-AUC **0.6816 ± 0.0078** — on REAL US nursing homes with REAL labels |
+| **CMS ↔ OIG LEIE cross-reference** | 4 modeled providers whose legal business name matches a federal exclusion record (candidates for verification) |
+| **Tuned RF (Kaggle, 5-fold CV, PR-AUC)** | **0.7491** (Δ +0.015 vs default hyperparameters) |
+| **Drift (Kaggle temporal)** | 13 / 32 features cross PSI 0.25 → would trigger retraining alert |
+| **RAG corpus** | Synthetic policy rules + **real federal exclusion-code taxonomy** from §1128 (15 codes, 83K active cases) |
 | **RAG layer** | Three tiers: TF-IDF + template → semantic dense retrieval (sentence-transformers) → semantic + local LLM generation (flan-t5-base, deterministic decoding) |
 | **Fairness** | Patient-panel demographic audit with 4/5ths-rule disparate-impact check |
 | **Feedback loop** | Analyst-disposition CSV → model-vs-analyst agreement metrics → retrain trigger |
-| **Reproducibility** | `make real-pipeline && make dashboard` · 30 pytest checks · GitHub Actions CI |
+| **Reproducibility** | `make download-real && make real-pipeline && make cms-ltc` · 37 pytest checks · GitHub Actions CI |
 
 > **Disclaimer:** Public educational dataset only — not Manulife/John Hancock data, not LTC-specific, no PHI. RAG policy text is synthetic. See §4 Data Disclaimer.
 
@@ -53,7 +63,75 @@ portability only; real headline metrics below come from the Kaggle dataset.
 
 ---
 
-## 2. Real Dataset Results
+## 2. Real Datasets
+
+This project trains on **three real public datasets** — not one. The Kaggle dataset is the legacy pipeline; the OIG LEIE and CMS Nursing Home Compare additions move the project from "anonymized educational data" to "real LTC providers with real names and real federal-fraud exclusion records."
+
+### Dataset 1 — Kaggle Healthcare Provider Fraud Detection (anonymized claims)
+
+- Real Medicare claim structure, anonymized provider/beneficiary IDs
+- 558K+ inpatient/outpatient claims, 138K beneficiaries → 5,410 providers
+- Binary `PotentialFraud` labels (9.35% fraud rate)
+- Used for the primary modeling pipeline (Sections 9–14)
+
+### Dataset 2 — CMS Nursing Home Provider Information (real LTC providers)
+
+- **Real, named US nursing homes** with CMS Certification Numbers (CCNs)
+- 14,699 facilities, downloaded from `data.cms.gov` via paginated API
+- Real labels:
+  - `Abuse Icon == Y` (1,497 cited for resident abuse)
+  - `Special Focus Status` ∈ {SFF, SFF Candidate} — CMS's official quality watch list (526 facilities)
+  - `Number of Fines ≥ 5` (515 facilities)
+  - `Number of Payment Denials ≥ 1` (1,950 facilities)
+- Combined risk flag: 3,315 / 14,699 = **22.55% flag rate**
+- Features include ownership type, beds, occupancy, 5-star ratings, staffing hours, turnover, deficiency counts, chain affiliation
+- This is the closest publicly available approximation to the data an LTC FWA analytics team would actually work with.
+
+**Pipeline (`src/cms_ltc_pipeline.py`):**
+
+| Model | ROC-AUC | PR-AUC | F1 | CV PR-AUC (mean ± std) |
+|---|---|---|---|---|
+| Logistic Regression | 0.8485 | 0.6475 | 0.6001 | 0.6667 ± 0.0047 |
+| Random Forest | 0.8503 | 0.6479 | 0.6067 | 0.6653 ± 0.0074 |
+| **Gradient Boosting** ⭐ | **0.8538** | **0.6668** | 0.5296 | **0.6816 ± 0.0078** |
+
+Note that AUC on real LTC data (~0.85) is meaningfully lower than the Kaggle pipeline's 0.95 — and PR-AUC of 0.67 with stable CV (std ≈ 0.008) is the kind of result one would expect on a genuine LTC FWA problem. This is the **more credible number to cite in interviews**.
+
+### Dataset 3 — HHS-OIG List of Excluded Individuals/Entities (LEIE)
+
+- **Real federal healthcare-fraud exclusion records** (not synthetic, not labels-from-rules)
+- 83,256 currently-excluded individuals and entities, 8,608 with real NPIs
+- Downloaded directly from `oig.hhs.gov/exclusions/downloadables/UPDATED.csv`
+- **1,818 LTC-specific exclusions** (1,447 Home Health Agency, 256 Skilled Nursing Facility, 77 Hospice, 38 Nursing Firm)
+- Each record cites the **real legal authority** under §1128 of the Social Security Act:
+  - `1128a1` — Conviction of program-related crimes (25,760 cases)
+  - `1128a2` — Conviction relating to patient abuse (8,073 cases)
+  - `1128a3` — Felony health-care-fraud conviction (5,826 cases)
+  - `1128b4` — License revocation/suspension (33,136 cases — most common)
+  - `1128b7` — Anti-Kickback Statute violations (735 cases)
+  - …(15 codes total, see `data/documents/oig_exclusion_codes.txt`)
+
+**Integration:**
+
+- `src/oig_leie_analysis.py` produces real fraud descriptive analytics (top specialties, annual trends, LTC subset)
+- The exclusion-code taxonomy is auto-emitted to `data/documents/oig_exclusion_codes.txt` and **indexed by the RAG retriever alongside the synthetic policy rules** — so when the LLM generates an audit summary, it can cite **real federal authority** instead of synthetic rules.
+- The CMS LTC pipeline cross-references each modeled provider's legal business name against LEIE-excluded entities → `outputs/reports/cms_ltc_leie_overlap.csv` (4 candidate matches — names like "MEMORIAL MEDICAL CENTER" appear multiple times in LEIE; require human verification).
+
+> **Honesty note:** the direct NPI overlap between LEIE and the Kaggle claims is zero because Kaggle's physician identifiers are anonymized (`PHY412132`-style). This is exposed in `src/oig_leie_analysis.py` and reported in the output rather than hidden.
+
+### Reproducibility
+
+```bash
+make download-real     # ~25MB total, both datasets in 30s
+make oig-leie          # produces summary + LTC subset + RAG taxonomy
+make cms-ltc           # trains the LTC FWA models
+```
+
+Raw real-data CSVs are gitignored (downloadable, not committed). Processed modeling tables are committed.
+
+---
+
+## 3. Kaggle Pipeline Results
 
 Full pipeline run on the **Kaggle Healthcare Provider Fraud Detection Analysis** dataset (Train split):
 
@@ -122,7 +200,7 @@ Reproduce with: `make temporal-eval` (writes `outputs/reports/model_metrics_temp
 
 ---
 
-## 3. Business Problem & FWA Context
+## 4. Business Problem & FWA Context
 
 > "How do we systematically identify which healthcare providers are billing anomalously —
 > before we pay claims we can't recover — while protecting legitimate providers and
@@ -143,7 +221,7 @@ provider-level FWA patterns include:
 
 ---
 
-## 4. Dataset
+## 5. Kaggle Dataset Details
 
 **Name:** Healthcare Provider Fraud Detection Analysis
 **Source:** Kaggle (public educational dataset)
@@ -167,7 +245,7 @@ The dataset contains:
 
 ---
 
-## 5. Why this is relevant to LTC FWA
+## 6. Why this is relevant to LTC FWA
 
 The Kaggle dataset is **not** Long Term Care-specific — it covers Medicare-style
 inpatient/outpatient claims. However, the analytical workflow transfers almost
@@ -193,7 +271,7 @@ In short: different claim taxonomy, same analytical scaffolding, same audit deli
 
 ---
 
-## 6. Why This Dataset
+## 7. Why This Dataset
 
 This is the closest freely-available public proxy for healthcare FWA analytics:
 
@@ -207,7 +285,7 @@ This is the closest freely-available public proxy for healthcare FWA analytics:
 
 ---
 
-## 7. Solution Architecture
+## 8. Solution Architecture
 
 ```mermaid
 graph TD
@@ -225,7 +303,7 @@ graph TD
 
 ---
 
-## 8. Data Pipeline
+## 9. Data Pipeline
 
 ```
 data/raw/
@@ -253,7 +331,7 @@ src/monitoring.py            — data quality + monitoring charts
 
 ---
 
-## 9. Feature Engineering
+## 10. Feature Engineering
 
 Features engineered at provider level from joined inpatient/outpatient/beneficiary data:
 
@@ -303,7 +381,7 @@ Adding these 5 features lifted LR PR-AUC from 0.638 → 0.710 and GB temporal PR
 
 ---
 
-## 10. Modeling Approach
+## 11. Modeling Approach
 
 | Model | Notes |
 |---|---|
@@ -317,7 +395,7 @@ Class imbalance is handled with `class_weight="balanced"` for supervised models 
 
 ---
 
-## 11. Model Evaluation
+## 12. Model Evaluation
 
 Two-stage evaluation guards against split-of-the-day artifacts:
 
@@ -350,7 +428,7 @@ See **Section 2 — Real Dataset Results** above for headline numbers from the K
 
 ---
 
-## 12. Explainability
+## 13. Explainability
 
 - **Feature importance:** model `.feature_importances_` by default; uses SHAP TreeExplainer if the optional `shap` package is installed; permutation importance as a final fallback
 - **Provider explanations:** for each high-risk provider, 3-5 business-readable bullets
@@ -360,7 +438,7 @@ See **Section 2 — Real Dataset Results** above for headline numbers from the K
 
 ---
 
-## 13. RAG Provider Review Assistant
+## 14. RAG Provider Review Assistant
 
 Three retrieval+generation tiers, chosen at runtime based on installed packages:
 
@@ -389,7 +467,7 @@ Reviews are saved with a backend suffix so the three tiers do not collide:
 
 ---
 
-## 14. Model Monitoring & Data Quality
+## 15. Model Monitoring & Data Quality
 
 `src/monitoring.py` produces:
 
@@ -441,7 +519,7 @@ Outputs: `outputs/reports/feedback_log.csv`, `outputs/reports/feedback_loop_metr
 
 ---
 
-## 15. Fairness Audit
+## 16. Fairness Audit
 
 `src/fairness_audit.py` runs a disparate-impact analysis on the trained model. Because Kaggle providers do not carry protected attributes themselves, the audit operates on the **patient panel each provider serves**: it joins the beneficiary table back in, aggregates demographics per provider (majority race, average age band, dominant state), and compares model behaviour across cohorts.
 
@@ -460,7 +538,7 @@ This is intentionally a *descriptive* audit, not a hypothesis test. A production
 
 ---
 
-## 16. Responsible AI & Auditability
+## 17. Responsible AI & Auditability
 
 - **Human-in-the-loop:** every HIGH risk flag surfaces to a human analyst before action
 - **Quantified uncertainty:** model probability scores (not black-box flags)
@@ -471,7 +549,7 @@ This is intentionally a *descriptive* audit, not a hypothesis test. A production
 
 ---
 
-## 17. Repository Structure
+## 18. Repository Structure
 
 ```
 Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
@@ -518,7 +596,7 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 
 ---
 
-## 18. How to Download the Data
+## 19. How to Download the Data
 
 1. Go to: https://www.kaggle.com/datasets/rohitrox/healthcare-provider-fraud-detection-analysis
 2. Click **Download** (free Kaggle account required)
@@ -528,7 +606,7 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 
 ---
 
-## 19. How to Run
+## 20. How to Run
 
 ### Quick start with the Makefile
 
@@ -594,7 +672,7 @@ streamlit run app.py
 
 ---
 
-## 20. Sample Outputs
+## 21. Sample Outputs
 
 - `outputs/reports/model_metrics.json` — ROC-AUC, F1, precision, recall per model
 - `outputs/reports/threshold_analysis.csv` — full threshold sweep (0.05 → 0.95)
@@ -608,7 +686,7 @@ streamlit run app.py
 
 ---
 
-## 21. Dashboard
+## 22. Dashboard
 
 The Streamlit dashboard (`app.py`) is a 6-tab analyst-facing interface over the trained models, monitoring reports, and RAG review packets. It is the screenshot-friendly surface for the whole pipeline.
 
@@ -635,7 +713,7 @@ Screenshots are not committed to keep the repo light. Capture from the running a
 
 ---
 
-## 22. Project Deliverables
+## 23. Project Deliverables
 
 The pipeline produces a complete set of artifacts spanning data, modeling, monitoring, audit, and presentation layers:
 
@@ -668,7 +746,7 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 
 ---
 
-## 23. What Would Be Required in a Real Insurance Environment
+## 24. What Would Be Required in a Real Insurance Environment
 
 If this workflow were adapted into a real FWA program rather than run on a public reference dataset, the next investments would be:
 
@@ -682,7 +760,7 @@ If this workflow were adapted into a real FWA program rather than run on a publi
 
 ---
 
-## 24. Limitations & Future Improvements
+## 25. Limitations & Future Improvements
 
 | Current limitation | Potential improvement |
 |---|---|

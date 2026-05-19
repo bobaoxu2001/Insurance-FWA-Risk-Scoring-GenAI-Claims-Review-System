@@ -1,0 +1,11 @@
+CMS Nursing Home — best model: GradientBoosting
+Test n=2940  flag rate=0.2255
+============================================================
+              precision    recall  f1-score   support
+
+          OK     0.8506    0.9425    0.8942      2277
+     Flagged     0.6859    0.4314    0.5296       663
+
+    accuracy                         0.8272      2940
+   macro avg     0.7682    0.6869    0.7119      2940
+weighted avg     0.8134    0.8272    0.8120      2940

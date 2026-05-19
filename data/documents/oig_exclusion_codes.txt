@@ -1,0 +1,51 @@
+HHS-OIG EXCLUSION-CODE TAXONOMY
+============================================================
+Real legal authorities cited in the federal LEIE database.
+Source: 42 U.S.C. §1128 (Social Security Act).
+Counts below reflect the number of active exclusions in the
+LEIE snapshot used for this project (total 83,256 records).
+
+1. EXCLUSION CODE 1128a1  [25,760 active cases in LEIE]
+   Conviction of program-related crimes. Minimum 5-year exclusion. Mandatory exclusion under §1128(a)(1) of the Social Security Act.
+
+2. EXCLUSION CODE 1128a2  [8,073 active cases in LEIE]
+   Conviction relating to patient abuse or neglect in connection with the delivery of a healthcare item or service. Minimum 5-year exclusion. Mandatory under §1128(a)(2).
+
+3. EXCLUSION CODE 1128a3  [5,826 active cases in LEIE]
+   Felony conviction relating to health care fraud (offense other than that described in §1128(a)(1)). Minimum 5-year exclusion. Mandatory under §1128(a)(3).
+
+4. EXCLUSION CODE 1128a4  [3,551 active cases in LEIE]
+   Felony conviction relating to controlled substances. Minimum 5-year exclusion. Mandatory under §1128(a)(4).
+
+5. EXCLUSION CODE 1128b1  [936 active cases in LEIE]
+   Misdemeanor conviction relating to health care fraud (other than as described in §1128(a)). Permissive exclusion, typically 3 years.
+
+6. EXCLUSION CODE 1128b2  [67 active cases in LEIE]
+   Conviction relating to fraud, theft, embezzlement, or breach of fiduciary responsibility. Permissive exclusion under §1128(b)(2).
+
+7. EXCLUSION CODE 1128b3  [330 active cases in LEIE]
+   Misdemeanor conviction relating to a controlled substance. Permissive exclusion under §1128(b)(3).
+
+8. EXCLUSION CODE 1128b4  [33,136 active cases in LEIE]
+   License revocation, suspension, or surrender. Most common exclusion type (~40% of all LEIE entries). Coterminous with the underlying licensure action under §1128(b)(4).
+
+9. EXCLUSION CODE 1128b5  [803 active cases in LEIE]
+   Exclusion or suspension under a federal or state healthcare program. Coterminous with the other-agency action under §1128(b)(5).
+
+10. EXCLUSION CODE 1128b6  [77 active cases in LEIE]
+   Claims for excessive charges or unnecessary services and failure to furnish medically necessary services. Permissive under §1128(b)(6).
+
+11. EXCLUSION CODE 1128b7  [735 active cases in LEIE]
+   Fraud, kickbacks, and other prohibited activities (Anti-Kickback Statute). Permissive under §1128(b)(7). Minimum exclusion typically 5 years.
+
+12. EXCLUSION CODE 1128b8  [1,497 active cases in LEIE]
+   Conviction of fraud against a non-Medicare/Medicaid program. Permissive exclusion under §1128(b)(8).
+
+13. EXCLUSION CODE 1128b14  [2,167 active cases in LEIE]
+   Default on health education loans / scholarship obligations. Permissive exclusion under §1128(b)(14).
+
+14. EXCLUSION CODE 1128Aa  [148 active cases in LEIE]
+   Civil Money Penalty for false claims (under §1128A of the Social Security Act). Permissive exclusion.
+
+15. EXCLUSION CODE 1156  [53 active cases in LEIE]
+   Quality-of-care violations referred by Quality Improvement Organizations under §1156 of the Social Security Act.

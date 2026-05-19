@@ -17,5 +17,10 @@ data/raw/Test_Inpatientdata-*.csv
 data/raw/Test_Outpatientdata-*.csv
 data/raw/Test-*.csv
 
-# Keep the processed provider modeling table (small, derived, no raw PII)
+# Real public datasets (downloadable via scripts/download_real_data.sh)
+data/raw/oig/*.csv
+data/raw/cms/*.csv
+
+# Keep the processed modeling tables (small, derived, no raw PII)
 !data/processed/provider_modeling_table.csv
+!data/processed/cms_ltc_modeling_table.csv

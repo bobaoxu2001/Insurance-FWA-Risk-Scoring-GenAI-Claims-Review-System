@@ -55,13 +55,24 @@ def _detect_target(df):
 # ── Document loading & indexing ────────────────────────────────────────────────
 
 def load_policy_rules():
-    path = os.path.join(config.DATA_DOCUMENTS, "policy_rules.txt")
-    if not os.path.exists(path):
-        return []
-    with open(path) as f:
-        text = f.read()
-    chunks = re.split(r"\n(?=\d+\.)", text)
-    chunks = [c.strip() for c in chunks if len(c.strip()) > 50]
+    """Load all policy-style documents from data/documents/.
+    Currently indexes:
+      - policy_rules.txt           (synthetic LTC / FWA audit rules)
+      - oig_exclusion_codes.txt    (REAL federal exclusion-code taxonomy
+                                    emitted by src/oig_leie_analysis.py)
+    The latter is grounded in 42 U.S.C. §1128 and counts reflect 83K+
+    actual exclusions in the LEIE — so the RAG retriever cites real
+    federal authority where applicable."""
+    chunks = []
+    for filename in ("policy_rules.txt", "oig_exclusion_codes.txt"):
+        path = os.path.join(config.DATA_DOCUMENTS, filename)
+        if not os.path.exists(path):
+            continue
+        with open(path) as f:
+            text = f.read()
+        file_chunks = re.split(r"\n(?=\d+\.)", text)
+        file_chunks = [c.strip() for c in file_chunks if len(c.strip()) > 50]
+        chunks.extend(file_chunks)
     return chunks
 
 
