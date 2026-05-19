@@ -362,8 +362,7 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 ├── app.py                              # Streamlit 6-tab dashboard
 ├── config.py                           # Path constants
 ├── requirements.txt
-├── README.md
-└── resume_bullets.md
+└── README.md
 ```
 
 ---
@@ -468,105 +467,34 @@ Screenshots are not committed by default to keep the repo light — capture and 
 
 ---
 
-## 21. Resume Bullets
+## 21. Project Deliverables
 
-**Short (3 bullets):**
+The pipeline produces a complete set of artifacts spanning data, modeling, monitoring, audit, and presentation layers:
 
-- Built a provider-level healthcare FWA analytics pipeline using the public Kaggle Healthcare
-  Provider Fraud Detection dataset, joining inpatient, outpatient, and beneficiary records to
-  engineer 27 provider risk features and train ML fraud detection models.
-- Trained and evaluated Logistic Regression, Random Forest, Gradient Boosting/XGBoost, and
-  Isolation Forest models on imbalanced provider fraud labels, reporting ROC-AUC, PR-AUC,
-  precision/recall tradeoffs, and performing threshold sweep analysis.
-- Developed a RAG-style provider review assistant using TF-IDF retrieval over synthetic audit
-  policy rules to generate structured, auditable provider risk summaries supporting
-  human-in-the-loop analyst workflows.
-
-**Long (4 bullets):**
-
-- Built an end-to-end healthcare provider FWA analytics pipeline using the Kaggle Healthcare
-  Provider Fraud Detection Analysis dataset: ingested and joined inpatient, outpatient, and
-  beneficiary CSVs; engineered 27 provider-level features including reimbursement outlier
-  scores, inpatient billing ratio, chronic condition complexity, admission duration, and
-  diagnosis/procedure code diversity.
-- Trained and evaluated Logistic Regression, Random Forest, Gradient Boosting/XGBoost, and
-  Isolation Forest models with class-imbalance handling (balanced class weights, scale_pos_weight);
-  produced ROC, PR curve, confusion matrix, and a threshold sweep table mapping precision/recall
-  tradeoffs to analyst review capacity decisions.
-- Built a RAG-style provider audit review assistant (TF-IDF + cosine similarity over synthetic
-  healthcare billing policy rules) generating 15 structured review packets per run — each
-  containing quantified risk indicators, retrieved policy citations, documentation gaps,
-  suggested analyst actions, and a system limitations disclaimer.
-- Implemented a monitoring module producing data quality reports, reimbursement distribution
-  charts, fraud rate by volume bucket, and feature missingness plots; wrapped all outputs in
-  a 6-tab Streamlit dashboard with graceful fallback to synthetic demo mode when real data
-  is unavailable.
+| Layer | Deliverable | Location |
+|---|---|---|
+| Data | Provider-level modeling table (5,410 providers × 27 features + label) | `data/processed/provider_modeling_table.csv` |
+| Data | Portable SQL reference for the provider feature aggregation | `sql/provider_features.sql` |
+| Modeling | Trained best model (Random Forest) + Isolation Forest anomaly model | `outputs/models/best_fwa_model.pkl`, `isolation_forest.pkl` |
+| Modeling | Model metrics JSON (ROC-AUC, PR-AUC, precision, recall, F1 per model) | `outputs/reports/model_metrics.json` |
+| Modeling | Threshold sweep analysis (0.05 → 0.95 with precision/recall/F1/n_flagged) | `outputs/reports/threshold_analysis.csv` |
+| Modeling | ROC curve, precision-recall curve, confusion matrix, feature importance | `outputs/figures/*.png` |
+| Explainability | Top risk factors ranked by importance | `outputs/reports/top_risk_factors.csv` |
+| Explainability | Per-provider business-readable risk explanations | `outputs/reports/high_risk_provider_explanations.csv` |
+| GenAI / RAG | 15 structured provider review packets (10 High / 3 Medium / 2 Low risk) | `outputs/sample_reviews/review_*.txt` |
+| Monitoring | Data quality and feature monitoring reports | `outputs/reports/data_quality_summary.csv`, `model_monitoring_report.csv` |
+| Monitoring | Provider risk, reimbursement, and volume-bucket fraud-rate charts | `outputs/figures/provider_risk_distribution.png`, etc. |
+| Stakeholder | Executive summary 1-pager (business framing, headline metrics, roadmap) | `outputs/reports/executive_summary.md` |
+| Application | 6-tab Streamlit dashboard | `app.py` |
+| Engineering | pytest suite (13 tests) | `tests/` |
+| Engineering | GitHub Actions CI (compile + tests) | `.github/workflows/ci.yml` |
+| Engineering | Makefile (install / real-pipeline / synthetic-demo / dashboard / test) | `Makefile` |
 
 ---
 
-## 22. Resume GitHub Description
+## 22. What Would Be Required in a Real Insurance Environment
 
-Healthcare provider FWA risk scoring: Kaggle claims data → 27 features → ML models → RAG audit reviews → Streamlit dashboard
-
----
-
-## 23. LinkedIn Featured Project
-
-Built a healthcare provider fraud, waste & abuse (FWA) detection system using the public Kaggle Healthcare Provider Fraud Detection dataset. The pipeline joins inpatient, outpatient, and beneficiary records into a provider-level feature table (27 features), trains ensemble ML models with class-imbalance handling, and generates RAG-style audit review packets via TF-IDF policy retrieval. A 6-tab Streamlit dashboard surfaces risk scores, model performance, threshold analysis, and structured provider reviews — designed for human-in-the-loop analyst workflows. Full pipeline runs with or without the Kaggle download (synthetic fallback mode included).
-
----
-
-## 24. 30-Second Interview Pitch
-
-"I built a healthcare provider fraud detection system using a public Kaggle dataset of inpatient,
-outpatient, and beneficiary claims. The pipeline joins those three data sources and engineers
-about 25 provider-level features — things like reimbursement outlier scores, inpatient billing
-ratio, physician diversity, and chronic-condition complexity. I trained Random Forest, Gradient
-Boosting, and Logistic Regression models and did a full threshold sweep to show the
-precision/recall tradeoff. On top of the model, I built a RAG-style review system that retrieves
-relevant billing audit rules via TF-IDF and generates structured, human-readable audit packets
-for each high-risk provider. The whole thing runs in Streamlit with a graceful fallback to
-synthetic data if the Kaggle download isn't available."
-
----
-
-## 25. 2-Minute Interview Explanation (Manulife/John Hancock LTC FWA framing)
-
-"The project addresses the same core challenge your LTC FWA team faces: given a large volume
-of provider billing activity, how do you systematically identify which providers are billing
-anomalously — before you pay claims you can't recover?
-
-I used the Kaggle Healthcare Provider Fraud Detection Analysis dataset as a public proxy for
-this problem. It's not LTC-specific, but it has the key structural elements: inpatient and
-outpatient claims, beneficiary demographics with chronic conditions, physician identifiers,
-and binary fraud labels at the provider level.
-
-The feature engineering step joins three data sources and aggregates to the provider level —
-computing things like average reimbursement per claim relative to peers, inpatient billing
-ratio, unique beneficiaries served, and chronic condition complexity of the patient panel.
-These are the kinds of signals a human FWA analyst would look for manually.
-
-On the modeling side, I trained Random Forest and Gradient Boosting models with class-imbalance
-handling, evaluated them on ROC, precision-recall curves, and a threshold sweep table. The
-threshold sweep is important because the right operating point depends on how many reviewers
-you have — you can tune precision versus recall based on capacity.
-
-The RAG-style review assistant is designed for the human-in-the-loop layer: when a provider
-scores HIGH, the system retrieves the most relevant billing audit rules via TF-IDF and generates
-a structured packet — risk indicators, policy citations, documentation gaps, and suggested
-analyst actions. This gives the analyst everything they need to make a decision efficiently,
-without the model making the decision for them.
-
-I built all of this with a clean fallback to synthetic data so it can be demonstrated without
-proprietary data, and wrapped it in a Streamlit dashboard. The architecture mirrors what a
-production FWA system would look like before adding real-time scoring and case management
-integration."
-
----
-
-## 26. What I Would Improve in a Real Insurance Environment
-
-If this project were deployed into a real LTC FWA program rather than built on a public proxy, the next investments would be:
+If this workflow were adapted into a real FWA program rather than run on a public reference dataset, the next investments would be:
 
 - **Real LTC claim notes and care-plan documentation.** Replace synthetic policy text with actual SOC documentation, plan-of-care narratives, and progress notes so the RAG layer can do clinical/contextual evidence retrieval rather than generic billing-rule matching.
 - **Provider network / graph features.** Build referral graphs and shared-physician edges across providers; graph-based risk scoring catches collusive billing rings that provider-level features miss.
@@ -578,7 +506,7 @@ If this project were deployed into a real LTC FWA program rather than built on a
 
 ---
 
-## 27. Limitations & Future Improvements
+## 23. Limitations & Future Improvements
 
 | Current limitation | Potential improvement |
 |---|---|

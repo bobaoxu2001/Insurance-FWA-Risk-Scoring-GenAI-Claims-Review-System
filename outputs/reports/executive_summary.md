@@ -27,7 +27,7 @@ A provider-level fraud-waste-abuse (FWA) risk scoring workflow that:
 | Recall at default threshold | **0.7030** | Catches ~70% of labeled fraud |
 | Precision at default threshold | **0.6828** | ~68% of flagged providers are true positives |
 
-> **Important caveat for leadership:** these metrics come from a public educational dataset, not real Manulife / John Hancock LTC claims. They demonstrate the analytical workflow, not production performance.
+> **Important caveat for leadership:** these metrics come from a public educational dataset, not real proprietary insurance claims. They demonstrate the analytical workflow, not production performance.
 
 ## 3. Why this matters for LTC FWA
 
