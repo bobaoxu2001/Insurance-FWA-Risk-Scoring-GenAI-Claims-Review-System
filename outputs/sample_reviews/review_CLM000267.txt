@@ -1,0 +1,50 @@
+
+══════════════════════════════════════════════════════════════════
+INSURANCE FWA CLAIM REVIEW REPORT
+══════════════════════════════════════════════════════════════════
+Claim ID        : CLM000267
+Risk Level      : HIGH
+Model Risk Score: 1.0000
+Service Type    : Mental Health
+Diagnosis Group : Neurological
+Claim Amount    : $67,353.63
+Approved Amount : $45,906.30
+Provider ID     : PR0164
+State           : MI
+
+──────────────────────────────────────────────────────────────────
+KEY RISK INDICATORS
+──────────────────────────────────────────────────────────────────
+  - Claim amount is 14.8x provider average
+  - High-cost outlier (top 10% of all claims)
+  - Prior claims: 14 (elevated)
+
+──────────────────────────────────────────────────────────────────
+RETRIEVED POLICY EVIDENCE (TF-IDF Retrieval)
+──────────────────────────────────────────────────────────────────
+Query used: "claim amount exceeds provider average upcoding high cost claim outlier"
+
+  [1] (similarity=0.344) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW    6.1 Claim amount exceeds 200% of provider's average claim amount.    6.2 More than 3 claims from same provider-beneficiary pair within 30 days.    6.3 Services billed on weekends or holidays for non-emergency care.    6.4 Specialty services billed...
+  [2] (similarity=0.049) 5. PROVIDER ELIGIBILITY    5.1 Providers must maintain active licensure in the state of service.    5.2 Excluded providers (OIG exclusion list) may not submit claims.    5.3 Provider credentialing must be current and verified annually....
+  [3] (similarity=0.043) 7. ANOMALY THRESHOLDS    7.1 Provider billing volume >2 standard deviations above peer group: requires review.    7.2 Beneficiary with >15 claims per year: requires utilization management review.    7.3 Late submissions (>90 days): require clinical justification.    7.4 Approval rate <50%: triggers ...
+
+──────────────────────────────────────────────────────────────────
+CLAIM DOCUMENT EXCERPT
+──────────────────────────────────────────────────────────────────
+    (No claim document on file for this claim ID)
+
+──────────────────────────────────────────────────────────────────
+SUGGESTED ANALYST ACTION
+──────────────────────────────────────────────────────────────────
+SUSPEND PAYMENT pending analyst review. Assign to senior investigator. Request complete medical records and provider attestation within 10 business days.
+
+──────────────────────────────────────────────────────────────────
+AUDIT NOTES
+──────────────────────────────────────────────────────────────────
+  Review generated: automated FWA risk scoring system v1.0
+  Data source: synthetic claims model (for portfolio demonstration)
+  Escalation: Human analyst review REQUIRED before any payment action.
+  Policy retrieval: TF-IDF cosine similarity over policy_rules.txt (no external API; deterministic output).
+  Model: Best supervised classifier (Random Forest / GradientBoosting / XGBoost). Anomaly detection: Isolation Forest.
+  DISCLAIMER: This review is AI-assisted. Final adjudication must involve a licensed insurance professional. Scores are probabilistic, not definitive.
+══════════════════════════════════════════════════════════════════

@@ -1,0 +1,60 @@
+INSURANCE POLICY RULES AND COMPLIANCE GUIDELINES
+==================================================
+
+1. FRAUD, WASTE, AND ABUSE (FWA) DEFINITIONS
+   1.1 Fraud: Intentional deception or misrepresentation to obtain unauthorized benefit.
+   1.2 Waste: Overutilization of services not caused by criminally negligent actions.
+   1.3 Abuse: Actions inconsistent with sound fiscal, business, or medical practices.
+
+2. CLAIM SUBMISSION REQUIREMENTS
+   2.1 Claims must be submitted within 90 days of service date.
+   2.2 All claims require valid diagnosis codes (ICD-10) and procedure codes (CPT/HCPCS).
+   2.3 Duplicate claims for the same service, date, and beneficiary are prohibited.
+   2.4 Claims must be supported by complete medical documentation.
+
+3. BILLING GUIDELINES
+   3.1 Unbundling: Billing separately for services that should be billed together is prohibited.
+   3.2 Upcoding: Billing for a higher-intensity service than provided is prohibited.
+   3.3 Phantom billing: Billing for services not rendered is prohibited.
+   3.4 Kickbacks: Receiving remuneration for referrals is a federal offense.
+
+4. DOCUMENTATION STANDARDS
+   4.1 Medical records must support the level of service billed.
+   4.2 Physician signatures required on all orders and certifications.
+   4.3 Electronic health records must include audit trails.
+   4.4 Incomplete or altered documentation triggers automatic claim review.
+
+5. PROVIDER ELIGIBILITY
+   5.1 Providers must maintain active licensure in the state of service.
+   5.2 Excluded providers (OIG exclusion list) may not submit claims.
+   5.3 Provider credentialing must be current and verified annually.
+
+6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW
+   6.1 Claim amount exceeds 200% of provider's average claim amount.
+   6.2 More than 3 claims from same provider-beneficiary pair within 30 days.
+   6.3 Services billed on weekends or holidays for non-emergency care.
+   6.4 Specialty services billed by non-specialist providers.
+   6.5 Pharmacy claims for quantities exceeding standard dosage protocols.
+   6.6 Claims with documentation score below 0.4 (system-calculated).
+
+7. ANOMALY THRESHOLDS
+   7.1 Provider billing volume >2 standard deviations above peer group: requires review.
+   7.2 Beneficiary with >15 claims per year: requires utilization management review.
+   7.3 Late submissions (>90 days): require clinical justification.
+   7.4 Approval rate <50%: triggers retrospective audit for provider.
+
+8. ESCALATION PROCEDURES
+   8.1 Risk score >= 0.6 (High): Immediate analyst review, potential payment suspension.
+   8.2 Risk score 0.3–0.59 (Medium): Enhanced review within 5 business days.
+   8.3 Risk score < 0.3 (Low): Standard processing, routine audit sampling.
+
+9. APPEAL RIGHTS
+   9.1 Providers may appeal denied or suspended claims within 60 days.
+   9.2 Appeals must include additional supporting documentation.
+   9.3 First-level appeal decided within 30 days; second-level within 60 days.
+
+10. REGULATORY COMPLIANCE
+    10.1 Claims processing subject to CMS guidelines (42 CFR Part 455).
+    10.2 HIPAA privacy and security rules apply to all claim records.
+    10.3 False Claims Act penalties apply to knowingly fraudulent submissions.
+    10.4 State insurance department regulations supersede when more restrictive.

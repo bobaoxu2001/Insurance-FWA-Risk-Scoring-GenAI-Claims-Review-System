@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM000334
+Service Type  : Mental Health
+Diagnosis     : Musculoskeletal
+Claimant Age  : 73
+Claim Amount  : $2,195.89
+
+--- CLINICAL NOTES ---
+Patient presented for counseling related to Musculoskeletal condition.
+Treating physician documented standard protocol adherence.
+Documentation appears incomplete; some fields missing or inconsistent.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0269
+Claim submitted: 2022-09-25
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Musculoskeletal.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 2

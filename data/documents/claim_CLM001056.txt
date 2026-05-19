@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM001056
+Service Type  : Inpatient
+Diagnosis     : Diabetes
+Claimant Age  : 66
+Claim Amount  : $465.58
+
+--- CLINICAL NOTES ---
+Patient presented for surgical procedure related to Diabetes condition.
+Treating physician documented standard protocol adherence.
+Documentation appears incomplete; some fields missing or inconsistent.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0258
+Claim submitted: 2022-05-25
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Diabetes.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 7

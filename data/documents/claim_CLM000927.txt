@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM000927
+Service Type  : Dental
+Diagnosis     : Cardiovascular
+Claimant Age  : 64
+Claim Amount  : $481.79
+
+--- CLINICAL NOTES ---
+Patient presented for root canal treatment related to Cardiovascular condition.
+Treating physician documented standard protocol adherence.
+Documentation is complete and consistent with clinical notes.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0223
+Claim submitted: 2023-07-03
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Cardiovascular.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 5

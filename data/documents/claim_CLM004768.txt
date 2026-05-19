@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM004768
+Service Type  : Outpatient
+Diagnosis     : Musculoskeletal
+Claimant Age  : 74
+Claim Amount  : $421.26
+
+--- CLINICAL NOTES ---
+Patient presented for lab work related to Musculoskeletal condition.
+Treating physician documented standard protocol adherence.
+Documentation is complete and consistent with clinical notes.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0103
+Claim submitted: 2022-02-15
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Musculoskeletal.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 7

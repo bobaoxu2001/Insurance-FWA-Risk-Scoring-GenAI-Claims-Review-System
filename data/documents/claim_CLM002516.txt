@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM002516
+Service Type  : Inpatient
+Diagnosis     : Mental Health
+Claimant Age  : 45
+Claim Amount  : $4,003.51
+
+--- CLINICAL NOTES ---
+Patient presented for hospital admission related to Mental Health condition.
+Treating physician documented standard protocol adherence.
+Documentation appears incomplete; some fields missing or inconsistent.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0084
+Claim submitted: 2022-03-22
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Mental Health.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 2

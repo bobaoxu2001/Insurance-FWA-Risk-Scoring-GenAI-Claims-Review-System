@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM000487
+Service Type  : Emergency
+Diagnosis     : Oncology
+Claimant Age  : 69
+Claim Amount  : $646.78
+
+--- CLINICAL NOTES ---
+Patient presented for trauma care related to Oncology condition.
+Treating physician documented standard protocol adherence.
+Documentation is complete and consistent with clinical notes.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0064
+Claim submitted: 2023-10-21
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Oncology.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 3

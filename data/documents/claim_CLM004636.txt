@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM004636
+Service Type  : Pharmacy
+Diagnosis     : Other
+Claimant Age  : 33
+Claim Amount  : $1,501.74
+
+--- CLINICAL NOTES ---
+Patient presented for specialty drug related to Other condition.
+Treating physician documented standard protocol adherence.
+Documentation is complete and consistent with clinical notes.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0151
+Claim submitted: 2023-12-10
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Other.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: Yes
+Duplicate Flag : No
+Suspicious Keywords Found: 1

@@ -1,0 +1,51 @@
+
+══════════════════════════════════════════════════════════════════
+INSURANCE FWA CLAIM REVIEW REPORT
+══════════════════════════════════════════════════════════════════
+Claim ID        : CLM000087
+Risk Level      : HIGH
+Model Risk Score: 1.0000
+Service Type    : Inpatient
+Diagnosis Group : Diabetes
+Claim Amount    : $13,703.65
+Approved Amount : $5,273.55
+Provider ID     : PR0250
+State           : MI
+
+──────────────────────────────────────────────────────────────────
+KEY RISK INDICATORS
+──────────────────────────────────────────────────────────────────
+  - Claim amount is 5.5x provider average
+  - Suspicious keywords detected: 6
+  - High-cost outlier (top 10% of all claims)
+  - Prior claims: 17 (elevated)
+
+──────────────────────────────────────────────────────────────────
+RETRIEVED POLICY EVIDENCE (TF-IDF Retrieval)
+──────────────────────────────────────────────────────────────────
+Query used: "suspicious keywords documentation fraud claim amount exceeds provider average upcoding high cost claim outlier"
+
+  [1] (similarity=0.334) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW    6.1 Claim amount exceeds 200% of provider's average claim amount.    6.2 More than 3 claims from same provider-beneficiary pair within 30 days.    6.3 Services billed on weekends or holidays for non-emergency care.    6.4 Specialty services billed...
+  [2] (similarity=0.069) 1. FRAUD, WASTE, AND ABUSE (FWA) DEFINITIONS    1.1 Fraud: Intentional deception or misrepresentation to obtain unauthorized benefit.    1.2 Waste: Overutilization of services not caused by criminally negligent actions.    1.3 Abuse: Actions inconsistent with sound fiscal, business, or medical pract...
+  [3] (similarity=0.067) 4. DOCUMENTATION STANDARDS    4.1 Medical records must support the level of service billed.    4.2 Physician signatures required on all orders and certifications.    4.3 Electronic health records must include audit trails.    4.4 Incomplete or altered documentation triggers automatic claim review....
+
+──────────────────────────────────────────────────────────────────
+CLAIM DOCUMENT EXCERPT
+──────────────────────────────────────────────────────────────────
+    (No claim document on file for this claim ID)
+
+──────────────────────────────────────────────────────────────────
+SUGGESTED ANALYST ACTION
+──────────────────────────────────────────────────────────────────
+SUSPEND PAYMENT pending analyst review. Assign to senior investigator. Request complete medical records and provider attestation within 10 business days.
+
+──────────────────────────────────────────────────────────────────
+AUDIT NOTES
+──────────────────────────────────────────────────────────────────
+  Review generated: automated FWA risk scoring system v1.0
+  Data source: synthetic claims model (for portfolio demonstration)
+  Escalation: Human analyst review REQUIRED before any payment action.
+  Policy retrieval: TF-IDF cosine similarity over policy_rules.txt (no external API; deterministic output).
+  Model: Best supervised classifier (Random Forest / GradientBoosting / XGBoost). Anomaly detection: Isolation Forest.
+  DISCLAIMER: This review is AI-assisted. Final adjudication must involve a licensed insurance professional. Scores are probabilistic, not definitive.
+══════════════════════════════════════════════════════════════════

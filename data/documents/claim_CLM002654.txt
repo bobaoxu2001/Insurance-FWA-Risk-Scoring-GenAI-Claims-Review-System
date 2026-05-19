@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM002654
+Service Type  : Outpatient
+Diagnosis     : Mental Health
+Claimant Age  : 50
+Claim Amount  : $1,921.46
+
+--- CLINICAL NOTES ---
+Patient presented for diagnostic imaging related to Mental Health condition.
+Treating physician documented standard protocol adherence.
+Documentation is complete and consistent with clinical notes.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0082
+Claim submitted: 2023-09-10
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Mental Health.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 3

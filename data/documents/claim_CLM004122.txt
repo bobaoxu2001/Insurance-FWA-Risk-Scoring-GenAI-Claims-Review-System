@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM004122
+Service Type  : Outpatient
+Diagnosis     : Diabetes
+Claimant Age  : 45
+Claim Amount  : $1,215.60
+
+--- CLINICAL NOTES ---
+Patient presented for lab work related to Diabetes condition.
+Treating physician documented standard protocol adherence.
+Documentation appears incomplete; some fields missing or inconsistent.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0298
+Claim submitted: 2022-05-05
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Diabetes.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 4

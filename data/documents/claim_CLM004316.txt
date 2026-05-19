@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM004316
+Service Type  : Mental Health
+Diagnosis     : Respiratory
+Claimant Age  : 51
+Claim Amount  : $19,199.08
+
+--- CLINICAL NOTES ---
+Patient presented for counseling related to Respiratory condition.
+Treating physician documented standard protocol adherence.
+Documentation is complete and consistent with clinical notes.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0033
+Claim submitted: 2023-11-28
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Respiratory.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 2

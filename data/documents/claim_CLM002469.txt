@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM002469
+Service Type  : Outpatient
+Diagnosis     : Mental Health
+Claimant Age  : 18
+Claim Amount  : $2,931.63
+
+--- CLINICAL NOTES ---
+Patient presented for lab work related to Mental Health condition.
+Treating physician documented standard protocol adherence.
+Documentation appears incomplete; some fields missing or inconsistent.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0272
+Claim submitted: 2022-11-17
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Mental Health.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : No
+Suspicious Keywords Found: 1

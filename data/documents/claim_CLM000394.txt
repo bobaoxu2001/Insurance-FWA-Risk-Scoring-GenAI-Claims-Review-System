@@ -1,0 +1,28 @@
+INSURANCE CLAIM DOCUMENT
+========================
+Claim ID      : CLM000394
+Service Type  : Inpatient
+Diagnosis     : Gastrointestinal
+Claimant Age  : 34
+Claim Amount  : $1,522.79
+
+--- CLINICAL NOTES ---
+Patient presented for hospital admission related to Gastrointestinal condition.
+Treating physician documented standard protocol adherence.
+Documentation appears incomplete; some fields missing or inconsistent.
+
+--- PROVIDER NOTES ---
+Provider certifies that all services were medically necessary and rendered as described.
+Provider ID: PR0246
+Claim submitted: 2022-11-20
+
+--- CARE PLAN EXCERPT ---
+Continued monitoring and follow-up recommended for Gastrointestinal.
+Patient instructed on medication compliance and lifestyle modifications.
+Next appointment scheduled within 30-90 days depending on clinical response.
+
+
+--- SUBMISSION METADATA ---
+Late Submission: No
+Duplicate Flag : Yes
+Suspicious Keywords Found: 2
