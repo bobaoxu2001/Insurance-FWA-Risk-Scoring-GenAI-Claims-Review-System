@@ -368,6 +368,30 @@ def _risk_outlier_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+# ── Temporal anchor (for time-based train/test splits) ────────────────────────
+
+def _temporal_anchor(ip: pd.DataFrame, op: pd.DataFrame,
+                     provider_col_ip: str, provider_col_op: str) -> pd.DataFrame:
+    """Median ClaimStartDt per provider, used to derive a chronological train/test
+    split downstream. Not used as a model feature (dropped before training)."""
+    parts = []
+    for df, prov_col in [(ip, provider_col_ip), (op, provider_col_op)]:
+        c = _col(df, "ClaimStartDt")
+        if c is None:
+            continue
+        # Coerce to datetime; pandas' median on datetime gives the central date
+        d = pd.to_datetime(df[c], errors="coerce")
+        tmp = pd.DataFrame({"_prov": df[prov_col].values, "_d": d.values})
+        tmp = tmp.dropna(subset=["_d"])
+        parts.append(tmp)
+    if not parts:
+        return pd.DataFrame()
+    allc = pd.concat(parts, ignore_index=True)
+    s = allc.groupby("_prov")["_d"].median().rename("median_claim_date")
+    s.index.name = None
+    return s.to_frame()
+
+
 # ── Main pipeline ──────────────────────────────────────────────────────────────
 
 def build_provider_table() -> pd.DataFrame:
@@ -407,10 +431,13 @@ def build_provider_table() -> pd.DataFrame:
     print("Computing code diversity features...")
     div = _code_diversity_features(inpatient, outpatient, prov_col_ip, prov_col_op)
 
+    print("Computing temporal-anchor (median claim date per provider)...")
+    date_block = _temporal_anchor(inpatient, outpatient, prov_col_ip, prov_col_op)
+
     # Combine all feature blocks
     print("Combining feature blocks...")
     provider_df = vol.copy()
-    for block in [phy, fin, dem, dur, div]:
+    for block in [phy, fin, dem, dur, div, date_block]:
         if not block.empty:
             provider_df = provider_df.join(block, how="left")
 

@@ -10,16 +10,18 @@
 
 ## TL;DR
 
-End-to-end provider-level healthcare FWA pipeline on the public Kaggle Healthcare Provider Fraud Detection dataset, with a GenAI-style audit-review layer and a Streamlit analyst dashboard.
+End-to-end provider-level healthcare FWA pipeline on the public Kaggle Healthcare Provider Fraud Detection dataset, with a real local-LLM audit-review layer, fairness audit, temporal-split validation, and a Streamlit analyst dashboard.
 
 | | |
 |---|---|
 | **Data** | 558K+ inpatient/outpatient claims joined with 138K beneficiaries → **5,410 providers × 27 features** |
-| **Best model** | Random Forest — **ROC-AUC 0.9535** · **PR-AUC 0.7290** · **F1 0.6927** · Brier 0.041 |
-| **Stability** | 5-fold stratified CV: **0.9498 ± 0.0142** ROC-AUC |
+| **Best model (random split)** | Random Forest — **ROC-AUC 0.9535** · **PR-AUC 0.7290** · **F1 0.6927** · Brier 0.041 |
+| **Best model (temporal split)** | Gradient Boosting — **ROC-AUC 0.8859** · **PR-AUC 0.4066** — the realistic deployment number |
+| **Stability** | 5-fold stratified CV: 0.9498 ± 0.0142 (RF), 0.9533 ± 0.0139 (GB) |
 | **Selection metric** | PR-AUC on held-out test (imbalance-aware) |
-| **RAG layer** | TF-IDF retrieval over audit policy text → structured review packets for analyst sign-off |
-| **Reproducibility** | `make real-pipeline && make dashboard` · 17 pytest checks · GitHub Actions CI |
+| **RAG layer** | Three tiers: TF-IDF + template (baseline) → semantic dense retrieval (sentence-transformers) → semantic + local LLM generation (flan-t5-base, deterministic decoding) |
+| **Fairness** | Patient-panel demographic audit with 4/5ths-rule disparate-impact check |
+| **Reproducibility** | `make real-pipeline && make dashboard` · 22 pytest checks · GitHub Actions CI |
 
 > **Disclaimer:** Public educational dataset only — not Manulife/John Hancock data, not LTC-specific, no PHI. RAG policy text is synthetic. See §4 Data Disclaimer.
 
@@ -36,7 +38,7 @@ An end-to-end FWA analytics pipeline that:
 - Trains **Logistic Regression, Random Forest, Gradient Boosting / XGBoost, and Isolation
   Forest** models with class-imbalance handling
 - Evaluates with ROC-AUC, PR-AUC, F1, and a full **threshold sweep** analysis
-- Generates **provider-level SHAP / feature importance explanations**
+- Generates **provider-level feature-importance explanations** (model importances by default; SHAP if `shap` is installed)
 - Produces **RAG-style provider audit review packets** using TF-IDF retrieval over
   synthetic healthcare billing audit rules
 - Runs **model monitoring and data-quality checks** on the provider feature table
@@ -89,6 +91,20 @@ Random Forest is selected as the production model by **PR-AUC on the held-out se
 | 5 | `inpatient_claim_count` | 0.062 |
 
 > All metrics serialized to `outputs/reports/model_metrics.json` with `"_data_source": "real_kaggle_provider"` and an `_evaluation` block documenting the test split, CV scheme, and selection metric. Classification report saved to `outputs/reports/classification_report.txt`. Calibration plot at `outputs/figures/calibration_curve.png`.
+
+### Temporal-split evaluation — the realistic number
+
+The random 80/20 split shares timestamps between train and test, which is unrealistic for production. We re-trained and re-evaluated with a **chronological split**: train on providers whose median claim date is in the earliest 80% of the timeline, test on the most recent 20%. The drop is large and honest:
+
+| Model | Random ROC-AUC | **Temporal ROC-AUC** | Random PR-AUC | **Temporal PR-AUC** |
+|---|---|---|---|---|
+| Logistic Regression | 0.9117 | **0.7832** | 0.6714 | **0.1997** |
+| Random Forest | 0.9535 | **0.8931** | 0.7290 | **0.3812** |
+| **Gradient Boosting** ⭐ | 0.9489 | **0.8859** | 0.6752 | **0.4066** |
+
+Under temporal evaluation **Gradient Boosting beats Random Forest on PR-AUC** (0.41 vs 0.38) because GB's lower-variance score distribution generalizes better across the time gap. RF still wins on ROC-AUC but is over-confident on out-of-time data (visible in the calibration curve). This is the kind of finding that only surfaces with the right validation methodology — and it would change the production-model choice.
+
+Reproduce with: `make temporal-eval` (writes `outputs/reports/model_metrics_temporal.json`).
 
 ---
 
@@ -308,7 +324,7 @@ See **Section 2 — Real Dataset Results** above for headline numbers from the K
 
 ## 12. Explainability
 
-- **Feature importance:** SHAP TreeExplainer (if available) or model `.feature_importances_`
+- **Feature importance:** model `.feature_importances_` by default; uses SHAP TreeExplainer if the optional `shap` package is installed; permutation importance as a final fallback
 - **Provider explanations:** for each high-risk provider, 3-5 business-readable bullets
   (e.g. "Avg reimbursement per claim is 3.2x the overall median")
 - **Top risk factors:** `outputs/reports/top_risk_factors.csv`
@@ -318,22 +334,30 @@ See **Section 2 — Real Dataset Results** above for headline numbers from the K
 
 ## 13. RAG Provider Review Assistant
 
-A TF-IDF retrieval system over `data/documents/policy_rules.txt` that:
+Three retrieval+generation tiers, chosen at runtime based on installed packages:
 
-1. Scores each provider with the trained model
-2. Selects 10 HIGH + 3 MEDIUM + 2 LOW risk providers
-3. Builds a natural-language query from the provider's risk indicators
-4. Retrieves top-3 most relevant policy rule chunks (cosine similarity)
-5. Renders a structured review packet including:
-   - Provider ID, Risk Level, Model Risk Score
-   - Key Risk Indicators (3-5 specific, quantified bullets)
-   - Retrieved Policy / Audit Evidence
-   - Data & Documentation Gaps
-   - Suggested Analyst Action
-   - Human Review Notes
-   - System Limitations disclaimer
+| Tier | Retrieval | Generation | Dependencies | When it runs |
+|---|---|---|---|---|
+| 0 (always available) | TF-IDF + cosine similarity | Deterministic template | scikit-learn only | `src/rag_claim_review.py` |
+| 1 (opt-in) | **Semantic dense embeddings** (`all-MiniLM-L6-v2`) | Deterministic template | + sentence-transformers | `src/llm_review.py --tier 1` |
+| 2 (opt-in) | **Semantic dense embeddings** | **Local LLM** (`flan-t5-base`, deterministic decoding) | + transformers + torch | `src/llm_review.py --tier 2` |
 
-Reviews saved to `outputs/sample_reviews/review_{Provider}.txt`
+Install the optional path: `make install-llm` (≈700 MB of wheels; the flan-t5-base model auto-downloads to `~/.cache/huggingface` on first use, ~250M params, ~1 GB). The LLM call uses `do_sample=False` so every run produces the same output for the same input — auditable, reproducible.
+
+The pipeline scores every provider, then composes a structured review packet:
+- Provider ID, Risk Level, Model Risk Score, retrieval+generation backend (printed on every review)
+- **Audit Reviewer Summary** — 1-2 sentence LLM-generated (tier 2) or template-rendered (tier 0/1) explanation, grounded in the top risk indicator and top retrieved policy
+- Key Risk Indicators (3-5 specific, quantified bullets — deterministic from the feature values)
+- Retrieved Policy / Audit Evidence (top 3 chunks with similarity scores)
+- Data & Documentation Gaps
+- Suggested Analyst Action
+- Human Review Notes (analyst checklist)
+- System Limitations disclaimer
+
+Reviews are saved with a backend suffix so the three tiers do not collide:
+`review_{Provider}.txt`, `review_{Provider}_llm.txt`, etc.
+
+> **Honest note on tier 2 output quality.** flan-t5-base is a 250M-parameter model running on CPU. With few-shot prompting it produces grounded 1-2 sentence summaries, but it is not a 70B production model — output occasionally borrows wording from the in-context examples. The architecture is the deliverable; swap in a larger local model (`flan-t5-large`, `mistral-7b-instruct` via `llama.cpp`) for production-grade prose.
 
 ---
 
@@ -352,7 +376,26 @@ Reviews saved to `outputs/sample_reviews/review_{Provider}.txt`
 
 ---
 
-## 15. Responsible AI & Auditability
+## 15. Fairness Audit
+
+`src/fairness_audit.py` runs a disparate-impact analysis on the trained model. Because Kaggle providers do not carry protected attributes themselves, the audit operates on the **patient panel each provider serves**: it joins the beneficiary table back in, aggregates demographics per provider (majority race, average age band, dominant state), and compares model behaviour across cohorts.
+
+Outputs (after `make fairness`):
+
+| File | Contents |
+|---|---|
+| `outputs/reports/fairness_audit_report.csv` | Per-race-cohort: n_providers, fraud_rate, mean_risk_score, model_flag_rate, **disparate_impact_ratio**, **passes_4_5ths_rule** |
+| `outputs/reports/fairness_audit_age.csv` | Same metrics bucketed by patient-panel average age |
+| `outputs/figures/fairness_score_by_race.png` | Score-distribution boxplot by majority patient race |
+| `outputs/figures/fairness_flag_rate_by_cohort.png` | HIGH-flag rate bar chart with 4/5ths-rule threshold line |
+
+**Honest finding from the current Kaggle run:** the model's HIGH-flag rate concentrates almost entirely in providers serving majority-white patient panels (11.5%) versus 0% for majority-Black, majority-Hispanic, and majority-Other panels. The 4/5ths-rule **fails** for the latter three cohorts. This reflects the underlying label distribution — 505 of the 506 fraud labels in this dataset are attached to providers with majority-white panels (which is itself a known characteristic of the Medicare population in this dataset, not a model defect). In a real deployment this finding would trigger a compliance conversation about label sourcing before any model action.
+
+This is intentionally a *descriptive* audit, not a hypothesis test. A production deployment would add intersectional cohorts (Race × Age × State), statistical significance testing, and per-cohort calibration analysis.
+
+---
+
+## 16. Responsible AI & Auditability
 
 - **Human-in-the-loop:** every HIGH risk flag surfaces to a human analyst before action
 - **Quantified uncertainty:** model probability scores (not black-box flags)
@@ -363,7 +406,7 @@ Reviews saved to `outputs/sample_reviews/review_{Provider}.txt`
 
 ---
 
-## 16. Repository Structure
+## 17. Repository Structure
 
 ```
 Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
@@ -374,10 +417,12 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 │   ├── provider_feature_engineering.py # Provider-level feature table builder
 │   ├── preprocessing.py                # Synthetic claim preprocessing
 │   ├── feature_engineering.py          # Synthetic claim feature engineering
-│   ├── modeling.py                     # ML training + evaluation (real or synthetic)
-│   ├── explainability.py               # Feature importance + explanations
-│   ├── rag_claim_review.py             # TF-IDF RAG review generator
+│   ├── modeling.py                     # ML training + evaluation (random / temporal split)
+│   ├── explainability.py               # Feature importance + provider explanations
+│   ├── rag_claim_review.py             # Tier-0 TF-IDF + template RAG (no extra deps)
+│   ├── llm_review.py                   # Tier-1/2 semantic retrieval + local-LLM generation
 │   ├── monitoring.py                   # Data quality + monitoring charts
+│   ├── fairness_audit.py               # Patient-panel disparate-impact audit
 │   └── utils.py
 ├── data/
 │   ├── raw/                            # Place Kaggle CSVs here (see data/README.md)
@@ -397,13 +442,14 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 ├── Makefile                            # make install / real-pipeline / dashboard / test
 ├── app.py                              # Streamlit 6-tab dashboard
 ├── config.py                           # Path constants
-├── requirements.txt
+├── requirements.txt                    # Core deps
+├── requirements-llm.txt                # Optional: torch + transformers + sentence-transformers
 └── README.md
 ```
 
 ---
 
-## 17. How to Download the Data
+## 18. How to Download the Data
 
 1. Go to: https://www.kaggle.com/datasets/rohitrox/healthcare-provider-fraud-detection-analysis
 2. Click **Download** (free Kaggle account required)
@@ -413,16 +459,22 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 
 ---
 
-## 18. How to Run
+## 19. How to Run
 
 ### Quick start with the Makefile
 
 ```bash
+# Core pipeline (no torch/transformers required)
 make install         # pip install -r requirements.txt
-make real-pipeline   # full pipeline on real Kaggle data
-make synthetic-demo  # fallback pipeline on synthetic data
+make real-pipeline   # full pipeline on real Kaggle data (random 80/20 split)
+make temporal-eval   # re-evaluate with chronological train/test split
+make fairness        # patient-panel disparate-impact audit
 make dashboard       # launch Streamlit dashboard
-make test            # run pytest
+make test            # run pytest (22 checks)
+
+# Optional GenAI layer (~700MB of torch + transformers + flan-t5-base download)
+make install-llm     # pip install -r requirements-llm.txt
+make llm-reviews     # 10 semantic-retrieval + local-LLM generated provider reviews
 ```
 
 ### Run tests
@@ -469,7 +521,7 @@ streamlit run app.py
 
 ---
 
-## 19. Sample Outputs
+## 20. Sample Outputs
 
 - `outputs/reports/model_metrics.json` — ROC-AUC, F1, precision, recall per model
 - `outputs/reports/threshold_analysis.csv` — full threshold sweep (0.05 → 0.95)
@@ -483,7 +535,7 @@ streamlit run app.py
 
 ---
 
-## 20. Dashboard
+## 21. Dashboard
 
 The Streamlit dashboard (`app.py`) is a 6-tab analyst-facing interface over the trained models, monitoring reports, and RAG review packets. It is the screenshot-friendly surface for the whole pipeline.
 
@@ -510,7 +562,7 @@ Screenshots are not committed to keep the repo light. Capture from the running a
 
 ---
 
-## 21. Project Deliverables
+## 22. Project Deliverables
 
 The pipeline produces a complete set of artifacts spanning data, modeling, monitoring, audit, and presentation layers:
 
@@ -519,10 +571,13 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 | Data | Provider-level modeling table (5,410 providers × 27 features + label) | `data/processed/provider_modeling_table.csv` |
 | Data | Portable SQL reference for the provider feature aggregation | `sql/provider_features.sql` |
 | Modeling | Trained best model (Random Forest) + Isolation Forest anomaly model | `outputs/models/best_fwa_model.pkl`, `isolation_forest.pkl` |
-| Modeling | Model metrics JSON (ROC-AUC, PR-AUC, P/R/F1, Brier, log-loss, 5-fold CV) | `outputs/reports/model_metrics.json` |
+| Modeling | Model metrics JSON (ROC-AUC, PR-AUC, P/R/F1, Brier, log-loss, 5-fold CV) — random split | `outputs/reports/model_metrics.json` |
+| Modeling | **Same schema under chronological train/test split** (the realistic metric) | `outputs/reports/model_metrics_temporal.json` |
 | Modeling | sklearn classification report for the best model | `outputs/reports/classification_report.txt` |
 | Modeling | Threshold sweep analysis (0.05 → 0.95 with precision/recall/F1/n_flagged) | `outputs/reports/threshold_analysis.csv` |
 | Modeling | ROC, precision-recall, **calibration**, confusion matrix, feature importance | `outputs/figures/*.png` |
+| Fairness | **Patient-panel disparate-impact audit** (4/5ths-rule check per cohort) | `outputs/reports/fairness_audit_report.csv` + figures |
+| GenAI | **Local-LLM-generated audit summaries** (semantic retrieval + flan-t5-base) | `outputs/sample_reviews/review_*_llm.txt` |
 | Explainability | Top risk factors ranked by importance | `outputs/reports/top_risk_factors.csv` |
 | Explainability | Per-provider business-readable risk explanations | `outputs/reports/high_risk_provider_explanations.csv` |
 | GenAI / RAG | 15 structured provider review packets (10 High / 3 Medium / 2 Low risk) | `outputs/sample_reviews/review_*.txt` |
@@ -536,7 +591,7 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 
 ---
 
-## 22. What Would Be Required in a Real Insurance Environment
+## 23. What Would Be Required in a Real Insurance Environment
 
 If this workflow were adapted into a real FWA program rather than run on a public reference dataset, the next investments would be:
 
@@ -550,7 +605,7 @@ If this workflow were adapted into a real FWA program rather than run on a publi
 
 ---
 
-## 23. Limitations & Future Improvements
+## 24. Limitations & Future Improvements
 
 | Current limitation | Potential improvement |
 |---|---|

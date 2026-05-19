@@ -67,7 +67,7 @@ trains ensemble ML models with class-imbalance handling. A RAG-style audit revie
 uses TF-IDF policy retrieval to generate structured provider risk summaries — with quantified
 risk indicators, policy citations, and suggested analyst actions — designed for human-in-the-loop
 workflows. Includes model monitoring, a full threshold sweep analysis, and a 6-tab Streamlit
-dashboard with graceful synthetic fallback. Tech: Python, scikit-learn, pandas, SHAP, Streamlit.
+dashboard with graceful synthetic fallback. Tech: Python, scikit-learn, pandas, Streamlit, sentence-transformers, transformers (flan-t5).
 
 ---
 

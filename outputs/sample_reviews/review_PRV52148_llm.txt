@@ -1,0 +1,54 @@
+======================================================================
+Provider Audit Review  —  Provider PRV52148
+======================================================================
+Risk Level         : MEDIUM
+Model Risk Score   : 0.5386
+Retrieval          : semantic (sentence-transformers all-MiniLM-L6-v2)
+Generation         : flan-t5-small (local LLM, deterministic decoding)
+
+Audit Reviewer Summary
+----------------------------------------------------------------------
+Review the following policies:
+
+Key Risk Indicators
+----------------------------------------------------------------------
+  • Avg reimbursement per claim ($4,425) is 12.4x the overall provider median ($356)
+
+Retrieved Policy / Audit Evidence (top 3)
+----------------------------------------------------------------------
+  [1] (sim=0.456) 7. ANOMALY THRESHOLDS
+   7.1 Provider billing volume >2 standard deviations above peer group: requires review.
+   7.2 Beneficiary with >15 claims per year: requires utilization management review.
+   7.3 Late submissions (>90 days): require clinical justification.
+   7.4 Approval rate <50%: triggers 
+  [2] (sim=0.425) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW
+   6.1 Claim amount exceeds 200% of provider's average claim amount.
+   6.2 More than 3 claims from same provider-beneficiary pair within 30 days.
+   6.3 Services billed on weekends or holidays for non-emergency care.
+   6.4 Specialty services billed
+  [3] (sim=0.400) 1. FRAUD, WASTE, AND ABUSE (FWA) DEFINITIONS
+   1.1 Fraud: Intentional deception or misrepresentation to obtain unauthorized benefit.
+   1.2 Waste: Overutilization of services not caused by criminally negligent actions.
+   1.3 Abuse: Actions inconsistent with sound fiscal, business, or medical pract
+
+Documentation / Data Gaps
+----------------------------------------------------------------------
+  • No automated documentation gaps identified; standard audit sampling applies
+
+Suggested Analyst Action : ENHANCED REVIEW within 5 business days.  Pull provider-level claim detail and cross-check with peer-provider benchmarks.  Do not suspend unless additional red flags are found.
+
+Human Review Notes
+----------------------------------------------------------------------
+  • Verify provider NPI is active and not on the OIG exclusion list
+  • Cross-check billed CPT codes against CMS peer-group norms for this specialty
+  • Confirm all attending physicians billed under this NPI are independently enrolled
+
+System Limitations
+----------------------------------------------------------------------
+  • Data source: Kaggle Healthcare Provider Fraud Detection Analysis (public educational dataset).
+  • NOT Manulife / John Hancock data.  NOT Long Term Care-specific data.
+  • No real patient records, clinical documents, or claim notes are used.
+  • RAG policy text is synthetic.  TF-IDF retrieval may miss semantically relevant rules.
+  • All HIGH-risk flags require a licensed analyst review before any payment action.
+
+======================================================================

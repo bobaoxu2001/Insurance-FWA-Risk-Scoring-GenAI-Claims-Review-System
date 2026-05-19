@@ -1,0 +1,15 @@
+# Optional dependencies for the tier-1 (semantic retrieval) and tier-2
+# (semantic retrieval + local LLM generation) RAG paths in src/llm_review.py.
+#
+# Install with:
+#   pip install -r requirements-llm.txt
+#
+# Then run:
+#   python -m src.llm_review --tier 2 --mixed
+#
+# The default flan-t5-base model (~250M params, ~1GB) downloads from HuggingFace
+# on first use. To use a smaller cached model: --model-id google/flan-t5-small.
+
+torch>=2.0,<2.3              # CPU is fine for flan-t5-small/base inference
+transformers<4.50            # pinned to versions compatible with torch 2.2
+sentence-transformers<5

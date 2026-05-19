@@ -1,0 +1,5 @@
+panel_majority_race,n_providers,n_fraud_labels,fraud_rate,mean_risk_score,p90_risk_score,model_flag_rate,disparate_impact_ratio,passes_4_5ths_rule
+white,5236,505,0.0964,0.1161,0.6102,0.1154,1.0,True
+black,106,0,0.0,0.0036,0.007,0.0,0.0,False
+other,49,1,0.0204,0.0343,0.0117,0.0408,0.354,False
+hispanic,19,0,0.0,0.0002,0.0001,0.0,0.0,False

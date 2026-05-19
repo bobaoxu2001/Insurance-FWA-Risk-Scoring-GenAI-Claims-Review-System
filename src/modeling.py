@@ -50,8 +50,8 @@ import config
 ID_LIKE_COLS = [
     "claim_id", "policyholder_id", "provider_id", "claim_date",
     "service_type", "diagnosis_group", "state",
-    # Provider-level id columns (Kaggle)
-    "Provider",
+    # Provider-level id / split-only columns (Kaggle)
+    "Provider", "median_claim_date",
 ]
 
 # rule_based_risk_score is a hand-coded composite of other features and would
@@ -126,6 +126,47 @@ def prepare_features(df):
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=config.RANDOM_SEED, stratify=y
     )
+    return X_train, X_test, y_train, y_test, feature_cols
+
+
+def prepare_features_temporal(df, test_fraction=0.2):
+    """Chronological split: providers whose median claim date is in the most-recent
+    `test_fraction` of the timeline go to the test set. This is the production-
+    realistic split — train on the past, evaluate on the future. Requires
+    `median_claim_date` to be present (added by provider_feature_engineering)."""
+    if "median_claim_date" not in df.columns:
+        raise ValueError(
+            "Temporal split requested but `median_claim_date` is not in the "
+            "provider table. Re-run src/provider_feature_engineering.py."
+        )
+
+    target = _detect_target(df)
+    feature_cols = _get_model_features(df, target)
+
+    dates = pd.to_datetime(df["median_claim_date"], errors="coerce")
+    n_missing = dates.isna().sum()
+    if n_missing > 0:
+        print(f"  WARN: {n_missing} providers have no median_claim_date; dropping them.")
+        df = df.loc[dates.notna()].copy()
+        dates = dates.loc[df.index]
+
+    # Use the (1 - test_fraction) quantile of dates as the cutoff
+    cutoff = dates.quantile(1 - test_fraction)
+    train_mask = dates <= cutoff
+    test_mask  = ~train_mask
+
+    X_train = df.loc[train_mask, feature_cols].fillna(
+        df[feature_cols].median(numeric_only=True))
+    X_test  = df.loc[test_mask,  feature_cols].fillna(
+        df[feature_cols].median(numeric_only=True))
+    y_train = df.loc[train_mask, target]
+    y_test  = df.loc[test_mask,  target]
+
+    print(f"  Temporal split cutoff: {cutoff.date()}")
+    print(f"  Train: {X_train.shape}  (fraud rate {y_train.mean():.2%})  "
+          f"dates up to {dates[train_mask].max().date()}")
+    print(f"  Test:  {X_test.shape}   (fraud rate {y_test.mean():.2%})  "
+          f"dates from {dates[test_mask].min().date()}")
     return X_train, X_test, y_train, y_test, feature_cols
 
 
@@ -412,15 +453,18 @@ def plot_feature_importance(model, feature_cols, model_name):
 # Save
 # ──────────────────────────────────────────────────────────────────────────────
 
-def save_outputs(best_model, metrics, iso_forest, cv_results=None, best_name=None):
+def save_outputs(best_model, metrics, iso_forest, cv_results=None,
+                 best_name=None, split_mode="random"):
     os.makedirs(config.OUTPUTS_MODELS, exist_ok=True)
     os.makedirs(config.OUTPUTS_REPORTS, exist_ok=True)
 
-    model_path = os.path.join(config.OUTPUTS_MODELS, "best_fwa_model.pkl")
+    suffix = "" if split_mode == "random" else f"_{split_mode}"
+
+    model_path = os.path.join(config.OUTPUTS_MODELS, f"best_fwa_model{suffix}.pkl")
     joblib.dump(best_model, model_path)
     print(f"  Saved best model to {model_path}")
 
-    iso_path = os.path.join(config.OUTPUTS_MODELS, "isolation_forest.pkl")
+    iso_path = os.path.join(config.OUTPUTS_MODELS, f"isolation_forest{suffix}.pkl")
     joblib.dump(iso_forest, iso_path)
     print(f"  Saved Isolation Forest to {iso_path}")
 
@@ -432,6 +476,11 @@ def save_outputs(best_model, metrics, iso_forest, cv_results=None, best_name=Non
             merged[name].update(cv_results[name])
 
     # Annotate with run metadata
+    split_label = (
+        "80/20 stratified random"
+        if split_mode == "random"
+        else "chronological by median_claim_date (last 20% of timeline → test)"
+    )
     annotated = {
         "_data_source": _DATA_SOURCE,
         "_note": (
@@ -440,7 +489,7 @@ def save_outputs(best_model, metrics, iso_forest, cv_results=None, best_name=Non
             else "Metrics trained on SYNTHETIC demo data — not real insurance data"
         ),
         "_evaluation": {
-            "test_split": "80/20 stratified",
+            "test_split": split_label,
             "cv_scheme":  "5-fold StratifiedKFold on full dataset (scoring=roc_auc)",
             "selection_metric": "PR-AUC on held-out test set",
             "best_model": best_name,
@@ -448,7 +497,9 @@ def save_outputs(best_model, metrics, iso_forest, cv_results=None, best_name=Non
     }
     annotated.update(merged)
 
-    metrics_path = os.path.join(config.OUTPUTS_REPORTS, "model_metrics.json")
+    metrics_path = os.path.join(
+        config.OUTPUTS_REPORTS, f"model_metrics{suffix}.json"
+    )
     with open(metrics_path, "w") as f:
         json.dump(annotated, f, indent=2)
     print(f"  Saved metrics to {metrics_path}")
@@ -459,13 +510,24 @@ def save_outputs(best_model, metrics, iso_forest, cv_results=None, best_name=Non
 # ──────────────────────────────────────────────────────────────────────────────
 
 def main():
-    print("Running modeling pipeline...")
+    import argparse
+    parser = argparse.ArgumentParser(description="Train and evaluate FWA models")
+    parser.add_argument(
+        "--split", choices=["random", "temporal"], default="random",
+        help="random: 80/20 stratified (default). temporal: chronological split on median_claim_date."
+    )
+    args, _ = parser.parse_known_args()
+
+    print(f"Running modeling pipeline...  (split={args.split})")
     df = load_data()
     target = _detect_target(df)
     print(f"  Target column: {target}  |  Data source: {_DATA_SOURCE}")
-    X_train, X_test, y_train, y_test, feature_cols = prepare_features(df)
-    print(f"  Train: {X_train.shape}  Test: {X_test.shape}  "
-          f"Fraud rate (test): {y_test.mean():.2%}")
+    if args.split == "temporal":
+        X_train, X_test, y_train, y_test, feature_cols = prepare_features_temporal(df)
+    else:
+        X_train, X_test, y_train, y_test, feature_cols = prepare_features(df)
+        print(f"  Train: {X_train.shape}  Test: {X_test.shape}  "
+              f"Fraud rate (test): {y_test.mean():.2%}")
 
     models = train_models(X_train, y_train)
     iso_forest = train_anomaly_detector(X_train)
@@ -489,7 +551,8 @@ def main():
 
     save_classification_report(best_model, X_test, y_test, best_name)
     save_outputs(best_model, metrics, iso_forest,
-                 cv_results=cv_results, best_name=best_name)
+                 cv_results=cv_results, best_name=best_name,
+                 split_mode=args.split)
     print("\nModeling complete.")
 
 

@@ -23,7 +23,9 @@ REQUIRED_SRC_FILES = [
     "src/modeling.py",
     "src/explainability.py",
     "src/rag_claim_review.py",
+    "src/llm_review.py",            # tier-1/2 semantic + LLM RAG
     "src/monitoring.py",
+    "src/fairness_audit.py",        # demographic disparate-impact check
 ]
 
 REQUIRED_TOP_LEVEL = [
@@ -131,6 +133,64 @@ def test_calibration_figure_exists() -> None:
         pytest.skip("calibration_curve.png not generated yet")
     # PNG magic bytes
     assert p.read_bytes()[:4] == b"\x89PNG", "calibration_curve.png is not a valid PNG"
+
+
+# ── Temporal-split metrics (separate artifact alongside random-split) ──────────
+
+
+def test_temporal_metrics_if_present() -> None:
+    """If a temporal-split run has been done, validate its metrics JSON has the
+    same schema and that the test_split label correctly indicates chronological."""
+    p = REPO_ROOT / "outputs" / "reports" / "model_metrics_temporal.json"
+    if not p.is_file():
+        pytest.skip("model_metrics_temporal.json not generated yet")
+    with p.open() as f:
+        data = json.load(f)
+    ev = data.get("_evaluation", {})
+    assert "chronological" in ev.get("test_split", "").lower(), \
+        "temporal metrics _evaluation.test_split should mention 'chronological'"
+    # AUC should drop relative to random split (the realistic finding)
+    aucs = [v["roc_auc"] for k, v in data.items()
+            if not k.startswith("_") and isinstance(v, dict)]
+    assert aucs and max(aucs) < 0.95, \
+        f"Temporal AUC suspiciously high (max={max(aucs):.3f}); expected ~0.85-0.92"
+
+
+# ── Fairness audit outputs ────────────────────────────────────────────────────
+
+
+def test_fairness_audit_report_if_present() -> None:
+    p = REPO_ROOT / "outputs" / "reports" / "fairness_audit_report.csv"
+    if not p.is_file():
+        pytest.skip("fairness_audit_report.csv not generated yet")
+    import csv
+    with p.open() as f:
+        rows = list(csv.DictReader(f))
+    assert rows, "fairness_audit_report.csv has no rows"
+    required = {"panel_majority_race", "n_providers", "fraud_rate",
+                "mean_risk_score", "model_flag_rate",
+                "disparate_impact_ratio", "passes_4_5ths_rule"}
+    assert required <= set(rows[0].keys()), \
+        f"fairness_audit_report.csv missing columns: {required - set(rows[0].keys())}"
+
+
+# ── LLM-augmented reviews ─────────────────────────────────────────────────────
+
+
+def test_llm_reviews_if_present() -> None:
+    """If tier-2 LLM reviews have been generated, they should mention the LLM
+    and semantic-retrieval provenance — protects against accidental fallback."""
+    review_dir = REPO_ROOT / "outputs" / "sample_reviews"
+    if not review_dir.is_dir():
+        pytest.skip("outputs/sample_reviews/ missing")
+    llm_reviews = list(review_dir.glob("review_*_llm.txt"))
+    if not llm_reviews:
+        pytest.skip("No *_llm.txt reviews generated yet")
+    sample = llm_reviews[0].read_text()
+    assert "flan-t5" in sample.lower() or "llm" in sample.lower(), \
+        "LLM review should declare its generation backend"
+    assert "semantic" in sample.lower() or "sentence-transformers" in sample.lower(), \
+        "LLM review should declare its semantic retrieval backend"
 
 
 # ── Top risk factors ───────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
+# Core dependencies — required for the structured ML pipeline and dashboard
 pandas
-numpy
+numpy<2          # pinned for torch 2.2 compatibility on macOS x86_64
 scikit-learn
 matplotlib
 seaborn

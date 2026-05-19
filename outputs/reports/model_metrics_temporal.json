@@ -1,0 +1,64 @@
+{
+  "_data_source": "real_kaggle_provider",
+  "_note": "Metrics trained on real Kaggle Healthcare Provider Fraud Detection dataset",
+  "_evaluation": {
+    "test_split": "chronological by median_claim_date (last 20% of timeline \u2192 test)",
+    "cv_scheme": "5-fold StratifiedKFold on full dataset (scoring=roc_auc)",
+    "selection_metric": "PR-AUC on held-out test set",
+    "best_model": "GradientBoosting"
+  },
+  "LogisticRegression": {
+    "roc_auc": 0.7832,
+    "pr_auc": 0.1997,
+    "precision": 0.1509,
+    "recall": 0.5161,
+    "f1": 0.2336,
+    "brier": 0.1085,
+    "log_loss": 0.3894,
+    "cv_auc_mean": 0.9134,
+    "cv_auc_std": 0.0246,
+    "cv_auc_folds": [
+      0.9311,
+      0.8995,
+      0.8759,
+      0.9468,
+      0.9138
+    ]
+  },
+  "RandomForest": {
+    "roc_auc": 0.8931,
+    "pr_auc": 0.3812,
+    "precision": 0.4828,
+    "recall": 0.4516,
+    "f1": 0.4667,
+    "brier": 0.0223,
+    "log_loss": 0.1453,
+    "cv_auc_mean": 0.9498,
+    "cv_auc_std": 0.0126,
+    "cv_auc_folds": [
+      0.9522,
+      0.9574,
+      0.9249,
+      0.9558,
+      0.9586
+    ]
+  },
+  "GradientBoosting": {
+    "roc_auc": 0.8859,
+    "pr_auc": 0.4066,
+    "precision": 0.6087,
+    "recall": 0.4516,
+    "f1": 0.5185,
+    "brier": 0.0212,
+    "log_loss": 0.0882,
+    "cv_auc_mean": 0.9515,
+    "cv_auc_std": 0.009,
+    "cv_auc_folds": [
+      0.9498,
+      0.9529,
+      0.9353,
+      0.9582,
+      0.9611
+    ]
+  }
+}
