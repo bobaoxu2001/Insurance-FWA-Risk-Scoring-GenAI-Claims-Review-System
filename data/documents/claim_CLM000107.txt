@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM000107
 Service Type  : Dental
 Diagnosis     : Oncology
-Claimant Age  : 18
-Claim Amount  : $4,667.04
+Claimant Age  : 24
+Claim Amount  : $806.44
 
 --- CLINICAL NOTES ---
 Patient presented for crown placement related to Oncology condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 3
+Suspicious Keywords Found: 1

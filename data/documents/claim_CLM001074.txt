@@ -3,13 +3,13 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM001074
 Service Type  : Outpatient
 Diagnosis     : Other
-Claimant Age  : 31
-Claim Amount  : $2,651.02
+Claimant Age  : 84
+Claim Amount  : $2,633.91
 
 --- CLINICAL NOTES ---
 Patient presented for diagnostic imaging related to Other condition.
 Treating physician documented standard protocol adherence.
-Documentation is complete and consistent with clinical notes.
+Documentation appears incomplete; some fields missing or inconsistent.
 
 --- PROVIDER NOTES ---
 Provider certifies that all services were medically necessary and rendered as described.
@@ -21,6 +21,7 @@ Continued monitoring and follow-up recommended for Other.
 Patient instructed on medication compliance and lifestyle modifications.
 Next appointment scheduled within 30-90 days depending on clinical response.
 
+FLAGS: Multiple suspicious keywords flagged by NLP screen.
 
 --- SUBMISSION METADATA ---
 Late Submission: No

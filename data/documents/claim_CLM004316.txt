@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM004316
 Service Type  : Mental Health
 Diagnosis     : Respiratory
-Claimant Age  : 51
-Claim Amount  : $19,199.08
+Claimant Age  : 30
+Claim Amount  : $4,559.71
 
 --- CLINICAL NOTES ---
 Patient presented for counseling related to Respiratory condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 2
+Suspicious Keywords Found: 1

@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM004067
 Service Type  : Pharmacy
 Diagnosis     : Cardiovascular
-Claimant Age  : 44
-Claim Amount  : $2,357.57
+Claimant Age  : 61
+Claim Amount  : $10,548.56
 
 --- CLINICAL NOTES ---
 Patient presented for compounded medication related to Cardiovascular condition.
@@ -21,8 +21,9 @@ Continued monitoring and follow-up recommended for Cardiovascular.
 Patient instructed on medication compliance and lifestyle modifications.
 Next appointment scheduled within 30-90 days depending on clinical response.
 
+FLAGS: Duplicate billing codes detected within recent submission window.
 
 --- SUBMISSION METADATA ---
 Late Submission: No
-Duplicate Flag : No
-Suspicious Keywords Found: 3
+Duplicate Flag : Yes
+Suspicious Keywords Found: 1

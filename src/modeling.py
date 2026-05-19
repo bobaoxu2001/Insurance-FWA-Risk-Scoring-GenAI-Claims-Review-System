@@ -18,7 +18,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, IsolationForest
 from sklearn.metrics import (
     roc_auc_score, precision_score, recall_score, f1_score,
-    confusion_matrix, roc_curve
+    confusion_matrix, roc_curve, precision_recall_curve, average_precision_score
 )
 from sklearn.model_selection import cross_val_score
 from sklearn.inspection import permutation_importance
@@ -42,10 +42,15 @@ ID_LIKE_COLS = [
     "service_type", "diagnosis_group", "state",
 ]
 
+# rule_based_risk_score is a hand-coded composite of other features and would
+# inflate apparent importance. It is kept in the dataset for the dashboard as a
+# transparent baseline, but excluded from supervised model inputs.
+EXCLUDE_FROM_MODEL = ["rule_based_risk_score"]
+
 
 def _get_model_features(df, target="fraud_label"):
     """Return only numeric, non-id feature columns."""
-    drop = ID_LIKE_COLS + [target]
+    drop = ID_LIKE_COLS + [target] + EXCLUDE_FROM_MODEL
     feature_cols = [
         c for c in df.columns
         if c not in drop and pd.api.types.is_numeric_dtype(df[c])
@@ -208,6 +213,51 @@ def plot_roc_curves(models, X_test, y_test):
     print(f"  Saved ROC curves to {path}")
 
 
+def plot_precision_recall(models, X_test, y_test):
+    """Save PR curves for all models and a per-threshold sweep CSV for the best."""
+    os.makedirs(config.OUTPUTS_FIGURES, exist_ok=True)
+    os.makedirs(config.OUTPUTS_REPORTS, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    best_name, best_ap, best_probs = None, -1, None
+    for name, model in models.items():
+        y_prob = model.predict_proba(X_test)[:, 1]
+        prec, rec, _ = precision_recall_curve(y_test, y_prob)
+        ap = average_precision_score(y_test, y_prob)
+        ax.plot(rec, prec, lw=2, label=f"{name} (AP={ap:.3f})")
+        if ap > best_ap:
+            best_ap, best_name, best_probs = ap, name, y_prob
+
+    # Baseline = prevalence
+    base = float(np.mean(y_test))
+    ax.axhline(base, ls="--", color="gray", lw=1, label=f"Prevalence={base:.2f}")
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Precision-Recall Curves — FWA Risk Models")
+    ax.legend(loc="lower left")
+    plt.tight_layout()
+    path = os.path.join(config.OUTPUTS_FIGURES, "precision_recall_curve.png")
+    plt.savefig(path, dpi=120)
+    plt.close()
+    print(f"  Saved PR curves to {path}")
+
+    # Threshold sweep for the best model by AP
+    rows = []
+    for t in np.round(np.arange(0.05, 0.96, 0.05), 2):
+        y_hat = (best_probs >= t).astype(int)
+        rows.append({
+            "threshold": float(t),
+            "precision": round(precision_score(y_test, y_hat, zero_division=0), 4),
+            "recall":    round(recall_score(y_test, y_hat, zero_division=0), 4),
+            "f1":        round(f1_score(y_test, y_hat, zero_division=0), 4),
+            "n_flagged": int(y_hat.sum()),
+        })
+    thr_df = pd.DataFrame(rows)
+    thr_path = os.path.join(config.OUTPUTS_REPORTS, "threshold_analysis.csv")
+    thr_df.to_csv(thr_path, index=False)
+    print(f"  Saved threshold analysis (best={best_name}) to {thr_path}")
+
+
 def plot_feature_importance(model, feature_cols, model_name):
     os.makedirs(config.OUTPUTS_FIGURES, exist_ok=True)
 
@@ -282,6 +332,7 @@ def main():
     print("\nGenerating visualizations...")
     plot_confusion_matrix(best_model, X_test, y_test, best_name)
     plot_roc_curves(models, X_test, y_test)
+    plot_precision_recall(models, X_test, y_test)
     plot_feature_importance(best_model, feature_cols, best_name)
 
     save_outputs(best_model, metrics, iso_forest)

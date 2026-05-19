@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM003050
 Service Type  : Pharmacy
 Diagnosis     : Oncology
-Claimant Age  : 61
-Claim Amount  : $3,145.09
+Claimant Age  : 36
+Claim Amount  : $2,570.81
 
 --- CLINICAL NOTES ---
 Patient presented for compounded medication related to Oncology condition.

@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM002100
 Service Type  : Pharmacy
 Diagnosis     : Respiratory
-Claimant Age  : 36
-Claim Amount  : $2,803.82
+Claimant Age  : 28
+Claim Amount  : $3,870.39
 
 --- CLINICAL NOTES ---
 Patient presented for compounded medication related to Respiratory condition.
@@ -21,9 +21,8 @@ Continued monitoring and follow-up recommended for Respiratory.
 Patient instructed on medication compliance and lifestyle modifications.
 Next appointment scheduled within 30-90 days depending on clinical response.
 
-CAUTION: Claim flagged for review. Duplicate billing codes detected. Provider has submitted similar claims within 30 days. Billed amount significantly exceeds provider average for this service.
 
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 6
+Suspicious Keywords Found: 2

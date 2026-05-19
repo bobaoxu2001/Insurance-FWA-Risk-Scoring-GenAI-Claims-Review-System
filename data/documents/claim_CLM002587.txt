@@ -3,13 +3,13 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM002587
 Service Type  : Mental Health
 Diagnosis     : Respiratory
-Claimant Age  : 23
-Claim Amount  : $5,614.97
+Claimant Age  : 32
+Claim Amount  : $5,918.69
 
 --- CLINICAL NOTES ---
 Patient presented for counseling related to Respiratory condition.
 Treating physician documented standard protocol adherence.
-Documentation appears incomplete; some fields missing or inconsistent.
+Documentation is complete and consistent with clinical notes.
 
 --- PROVIDER NOTES ---
 Provider certifies that all services were medically necessary and rendered as described.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 1
+Suspicious Keywords Found: 0

@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM001118
 Service Type  : Mental Health
 Diagnosis     : Mental Health
-Claimant Age  : 80
-Claim Amount  : $1,945.51
+Claimant Age  : 49
+Claim Amount  : $4,373.02
 
 --- CLINICAL NOTES ---
 Patient presented for psychotherapy session related to Mental Health condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 6
+Suspicious Keywords Found: 0

@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM004967
 Service Type  : Outpatient
 Diagnosis     : Gastrointestinal
-Claimant Age  : 53
-Claim Amount  : $1,445.63
+Claimant Age  : 45
+Claim Amount  : $703.06
 
 --- CLINICAL NOTES ---
 Patient presented for office visit related to Gastrointestinal condition.
@@ -23,6 +23,6 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 
 
 --- SUBMISSION METADATA ---
-Late Submission: Yes
+Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 6
+Suspicious Keywords Found: 1

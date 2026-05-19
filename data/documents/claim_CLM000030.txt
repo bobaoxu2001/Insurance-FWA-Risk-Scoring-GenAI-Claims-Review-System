@@ -3,13 +3,13 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM000030
 Service Type  : Outpatient
 Diagnosis     : Diabetes
-Claimant Age  : 26
-Claim Amount  : $8,898.89
+Claimant Age  : 38
+Claim Amount  : $593.12
 
 --- CLINICAL NOTES ---
 Patient presented for lab work related to Diabetes condition.
 Treating physician documented standard protocol adherence.
-Documentation appears incomplete; some fields missing or inconsistent.
+Documentation is complete and consistent with clinical notes.
 
 --- PROVIDER NOTES ---
 Provider certifies that all services were medically necessary and rendered as described.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 3
+Suspicious Keywords Found: 2

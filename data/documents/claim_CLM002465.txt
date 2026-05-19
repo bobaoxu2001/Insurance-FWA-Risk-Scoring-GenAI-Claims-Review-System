@@ -3,13 +3,13 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM002465
 Service Type  : Inpatient
 Diagnosis     : Mental Health
-Claimant Age  : 28
-Claim Amount  : $1,959.19
+Claimant Age  : 74
+Claim Amount  : $1,080.33
 
 --- CLINICAL NOTES ---
 Patient presented for surgical procedure related to Mental Health condition.
 Treating physician documented standard protocol adherence.
-Documentation appears incomplete; some fields missing or inconsistent.
+Documentation is complete and consistent with clinical notes.
 
 --- PROVIDER NOTES ---
 Provider certifies that all services were medically necessary and rendered as described.
@@ -21,8 +21,9 @@ Continued monitoring and follow-up recommended for Mental Health.
 Patient instructed on medication compliance and lifestyle modifications.
 Next appointment scheduled within 30-90 days depending on clinical response.
 
+FLAGS: Multiple suspicious keywords flagged by NLP screen. Submission received outside the 90-day window.
 
 --- SUBMISSION METADATA ---
-Late Submission: No
+Late Submission: Yes
 Duplicate Flag : No
-Suspicious Keywords Found: 5
+Suspicious Keywords Found: 3

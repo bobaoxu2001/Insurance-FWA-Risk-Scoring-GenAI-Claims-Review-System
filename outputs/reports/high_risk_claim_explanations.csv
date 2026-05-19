@@ -1,51 +1,51 @@
 claim_id,model_risk_score,fraud_label,claim_amount,explanation,explanation_count
-CLM000004,0.9522,0,8317.53,Claim amount is 2.0x provider average; Low documentation score (0.29/1.0); 5 suspicious keywords detected; High prior claim history (17 claims),4
-CLM000010,0.8631,1,1500.32,7 suspicious keywords detected; High prior claim history (19 claims),2
-CLM000028,1.0,1,27090.46,Claim amount is 5.1x provider average; Low documentation score (0.09/1.0); 7 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (19 claims),5
-CLM000035,0.7683,0,3645.18,Claim amount is 4.6x provider average; Low documentation score (0.09/1.0),2
-CLM000036,0.9407,0,6071.63,Late submission (>90 days); 5 suspicious keywords detected; High prior claim history (11 claims),3
-CLM000049,1.0,1,5047.69,Claim amount is 6.6x provider average; Low documentation score (0.26/1.0); 6 suspicious keywords detected,3
-CLM000050,1.0,1,22066.21,Claim amount is 4.7x provider average; Low documentation score (0.13/1.0); 6 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (15 claims),5
-CLM000062,1.0,1,17853.41,Claim amount is 9.0x provider average; 6 suspicious keywords detected; Claim amount in top 10% (high-cost outlier),3
-CLM000070,0.656,0,6677.9,Claim amount is 2.3x provider average; 4 suspicious keywords detected,2
-CLM000079,1.0,1,6111.29,Low documentation score (0.00/1.0); Duplicate claim flag triggered; 4 suspicious keywords detected; High prior claim history (18 claims),4
-CLM000087,1.0,1,13703.65,Claim amount is 5.5x provider average; 6 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (17 claims),4
-CLM000096,1.0,1,32103.5,Claim amount is 35.0x provider average; Low documentation score (0.24/1.0); 6 suspicious keywords detected; Claim amount in top 10% (high-cost outlier),4
-CLM000108,0.9755,0,5954.48,Claim amount is 3.2x provider average; Low documentation score (0.04/1.0); Late submission (>90 days); 3 suspicious keywords detected; High prior claim history (13 claims),5
-CLM000109,1.0,1,18423.62,Claim amount is 6.2x provider average; Low documentation score (0.35/1.0); 4 suspicious keywords detected; Claim amount in top 10% (high-cost outlier),4
-CLM000114,1.0,1,16582.14,Claim amount is 5.6x provider average; 6 suspicious keywords detected; Claim amount in top 10% (high-cost outlier),3
-CLM000120,1.0,1,27893.77,Claim amount is 9.8x provider average; Low documentation score (0.25/1.0); 5 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (16 claims),5
-CLM000130,1.0,1,19369.65,Claim amount is 18.1x provider average; Low documentation score (0.19/1.0); 7 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (11 claims),5
-CLM000140,0.8848,1,2626.95,5 suspicious keywords detected; High prior claim history (16 claims),2
-CLM000145,0.9217,1,2412.63,Claim amount is 1.9x provider average; Low documentation score (0.09/1.0); Duplicate claim flag triggered; 3 suspicious keywords detected; High prior claim history (15 claims),5
-CLM000154,1.0,1,3710.2,Claim amount is 4.7x provider average; 7 suspicious keywords detected; High prior claim history (13 claims),3
-CLM000155,1.0,1,29468.61,Claim amount is 51.5x provider average; Low documentation score (0.35/1.0); 3 suspicious keywords detected; Claim amount in top 10% (high-cost outlier),4
-CLM000199,1.0,1,40544.85,Claim amount is 30.6x provider average; Claim amount in top 10% (high-cost outlier),2
-CLM000221,0.6523,1,1478.12,Claim amount is 2.9x provider average; Low documentation score (0.19/1.0); High prior claim history (19 claims),3
-CLM000226,0.9972,1,8845.15,Claim amount is 5.9x provider average; 5 suspicious keywords detected; Claim amount in top 10% (high-cost outlier),3
-CLM000237,0.7579,0,7521.07,Low documentation score (0.11/1.0); 3 suspicious keywords detected,2
-CLM000252,0.826,0,7024.76,Low documentation score (0.33/1.0); 4 suspicious keywords detected; High prior claim history (12 claims),3
-CLM000257,1.0,1,16015.54,Claim amount is 29.7x provider average; Duplicate claim flag triggered; Claim amount in top 10% (high-cost outlier),3
-CLM000267,1.0,1,67353.63,Claim amount is 14.8x provider average; Claim amount in top 10% (high-cost outlier); High prior claim history (14 claims),3
-CLM000276,1.0,1,46109.31,Claim amount is 10.0x provider average; Low documentation score (0.03/1.0); Claim amount in top 10% (high-cost outlier),3
-CLM000281,0.9998,1,2936.94,Claim amount is 2.2x provider average; Low documentation score (0.09/1.0); 7 suspicious keywords detected; High prior claim history (19 claims),4
-CLM000290,1.0,1,10862.27,Claim amount is 14.1x provider average; 6 suspicious keywords detected; Claim amount in top 10% (high-cost outlier),3
-CLM000291,0.9736,1,1289.29,Duplicate claim flag triggered; 5 suspicious keywords detected; High prior claim history (13 claims),3
-CLM000298,1.0,1,6800.15,Claim amount is 10.6x provider average; High prior claim history (13 claims),2
-CLM000301,0.983,0,8947.66,Low documentation score (0.32/1.0); 7 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (12 claims),4
-CLM000313,0.9997,1,5884.99,Low documentation score (0.37/1.0); 3 suspicious keywords detected,2
-CLM000316,0.8958,0,3605.92,7 suspicious keywords detected; High prior claim history (11 claims),2
-CLM000321,1.0,1,15372.69,Claim amount is 6.0x provider average; Claim amount in top 10% (high-cost outlier); High prior claim history (11 claims),3
-CLM000327,0.9983,0,7149.98,Claim amount is 2.7x provider average; Low documentation score (0.31/1.0); 3 suspicious keywords detected; High prior claim history (17 claims),4
-CLM000341,0.7809,0,1851.0,Claim amount is 3.7x provider average; Low documentation score (0.16/1.0); 7 suspicious keywords detected,3
-CLM000343,1.0,1,24005.17,Claim amount is 18.1x provider average; 4 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (15 claims),4
-CLM000346,1.0,1,15270.2,Claim amount is 20.0x provider average; 7 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (19 claims),4
-CLM000360,0.9883,1,4061.02,Claim amount is 7.7x provider average; Low documentation score (0.27/1.0); Duplicate claim flag triggered; High prior claim history (13 claims),4
-CLM000362,1.0,1,11208.21,Claim amount is 19.6x provider average; 4 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (15 claims),4
-CLM000375,0.8925,1,926.91,Duplicate claim flag triggered; Late submission (>90 days); 6 suspicious keywords detected; High prior claim history (11 claims),4
-CLM000376,0.9583,1,1314.62,Low documentation score (0.39/1.0); 7 suspicious keywords detected,2
-CLM000382,0.6776,0,4351.3,Claim amount is 1.7x provider average; Low documentation score (0.29/1.0); 7 suspicious keywords detected; High prior claim history (16 claims),4
-CLM000397,1.0,1,14226.24,Claim amount is 8.7x provider average; Late submission (>90 days); Claim amount in top 10% (high-cost outlier); High prior claim history (12 claims),4
-CLM000412,1.0,1,10511.17,Claim amount is 8.0x provider average; Low documentation score (0.06/1.0); 4 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (13 claims),5
-CLM000415,1.0,1,11572.51,Claim amount is 3.0x provider average; Low documentation score (0.03/1.0); 5 suspicious keywords detected; Claim amount in top 10% (high-cost outlier); High prior claim history (19 claims),5
-CLM000421,1.0,1,2777.22,Claim amount is 4.9x provider average; 5 suspicious keywords detected; High prior claim history (17 claims),3
+CLM000001,0.9064,1,20481.67,Claim amount is 20.2x provider average; Claim amount >2x provider average; High prior claim history (17 claims),3
+CLM000023,0.8453,1,2539.98,7 suspicious keywords detected,1
+CLM000035,0.8554,1,6210.33,Claim amount is 6.0x provider average; Low documentation score (0.23/1.0); 5 suspicious keywords detected; Claim amount >2x provider average,4
+CLM000041,0.8144,1,6262.78,Claim amount is 11.3x provider average; Claim amount >2x provider average,2
+CLM000048,0.6677,1,3948.72,High prior claim history (17 claims),1
+CLM000056,0.7272,1,5598.16,Claim amount is 3.2x provider average; Low documentation score (0.12/1.0); 4 suspicious keywords detected; Claim amount >2x provider average; High prior claim history (18 claims),5
+CLM000059,0.8384,1,14122.15,Claim amount is 9.6x provider average; Claim amount >2x provider average,2
+CLM000072,0.7065,1,384.73,Duplicate claim flag triggered; High prior claim history (17 claims),2
+CLM000081,0.7878,1,1591.41,Duplicate claim flag triggered; 7 suspicious keywords detected; High prior claim history (18 claims),3
+CLM000083,0.6165,1,4614.47,Claim amount is 1.9x provider average; High prior claim history (12 claims),2
+CLM000084,0.8302,1,17470.41,Claim amount is 2.5x provider average; Low documentation score (0.33/1.0); 3 suspicious keywords detected; Claim amount >2x provider average; High prior claim history (12 claims),5
+CLM000098,0.7543,1,24907.87,Claim amount is 6.0x provider average; Claim amount >2x provider average,2
+CLM000104,0.6211,1,5586.06,3 suspicious keywords detected,1
+CLM000109,0.6172,1,2921.75,High prior claim history (13 claims),1
+CLM000114,0.7656,1,565.21,High prior claim history (12 claims),1
+CLM000129,0.8022,1,30348.96,Claim amount is 6.5x provider average; Claim amount >2x provider average; High prior claim history (15 claims),3
+CLM000133,0.7195,1,10930.3,Claim amount is 4.2x provider average; Claim amount >2x provider average; High prior claim history (16 claims),3
+CLM000142,0.6184,1,3189.09,High prior claim history (19 claims),1
+CLM000144,0.8113,1,1462.04,5 suspicious keywords detected; High prior claim history (16 claims),2
+CLM000150,0.8256,1,3316.6,Low documentation score (0.40/1.0); Late submission (>90 days); 5 suspicious keywords detected; High prior claim history (12 claims),4
+CLM000158,0.7274,1,5266.86,Claim amount is 3.3x provider average; Claim amount >2x provider average; High prior claim history (14 claims),3
+CLM000187,0.8485,1,3218.68,9 suspicious keywords detected,1
+CLM000198,0.7868,1,2687.41,High prior claim history (18 claims),1
+CLM000218,0.6039,1,516.53,Late submission (>90 days); High prior claim history (17 claims),2
+CLM000219,0.6902,1,1298.75,Claim amount is 2.0x provider average; Claim amount >2x provider average; High prior claim history (18 claims),3
+CLM000226,0.7559,1,3285.31,Claim amount is 6.2x provider average; Claim amount >2x provider average; High prior claim history (13 claims),3
+CLM000227,0.7197,0,9674.38,Claim amount is 15.9x provider average; Claim amount >2x provider average,2
+CLM000234,0.8332,1,3455.94,Claim amount is 3.4x provider average; Late submission (>90 days); 3 suspicious keywords detected; Claim amount >2x provider average,4
+CLM000235,0.6751,0,99516.32,Claim amount is 74.8x provider average; Claim amount >2x provider average,2
+CLM000241,0.7789,1,3959.43,Claim amount is 7.2x provider average; Claim amount >2x provider average; High prior claim history (16 claims),3
+CLM000245,0.8882,1,3540.73,Claim amount is 6.4x provider average; Claim amount >2x provider average; High prior claim history (18 claims),3
+CLM000270,0.7139,1,6708.05,Claim amount is 3.1x provider average; Duplicate claim flag triggered; Claim amount >2x provider average; High prior claim history (17 claims),4
+CLM000282,0.6191,1,4620.18,Claim amount is 2.9x provider average; Duplicate claim flag triggered; 4 suspicious keywords detected; Claim amount >2x provider average; High prior claim history (18 claims),5
+CLM000300,0.6897,1,370.49,High prior claim history (19 claims),1
+CLM000313,0.7515,1,1697.06,Late submission (>90 days); 3 suspicious keywords detected,2
+CLM000336,0.7111,1,13360.5,Claim amount is 20.2x provider average; Claim amount >2x provider average,2
+CLM000365,0.7616,1,2461.7,Claim amount is 4.7x provider average; Claim amount >2x provider average; High prior claim history (13 claims),3
+CLM000368,0.8661,1,7656.12,Claim amount is 6.4x provider average; Low documentation score (0.39/1.0); Duplicate claim flag triggered; 3 suspicious keywords detected; Claim amount >2x provider average; High prior claim history (17 claims),6
+CLM000370,0.637,1,1821.15,High prior claim history (18 claims),1
+CLM000397,0.7624,1,6382.44,Late submission (>90 days); 4 suspicious keywords detected; High prior claim history (18 claims),3
+CLM000415,0.8109,1,4299.36,Claim amount is 7.0x provider average; Claim amount >2x provider average,2
+CLM000421,0.8481,1,3932.73,Low documentation score (0.12/1.0); Duplicate claim flag triggered,2
+CLM000424,0.7491,1,17058.38,Claim amount is 6.2x provider average; Claim amount >2x provider average,2
+CLM000426,0.8615,1,27499.59,Claim amount is 10.0x provider average; Low documentation score (0.38/1.0); Late submission (>90 days); Claim amount >2x provider average,4
+CLM000427,0.8229,1,1316.37,Low documentation score (0.38/1.0); Duplicate claim flag triggered; Late submission (>90 days),3
+CLM000433,0.7107,0,2436.72,Low documentation score (0.34/1.0); 3 suspicious keywords detected; High prior claim history (11 claims),3
+CLM000439,0.7737,1,3122.74,High prior claim history (18 claims),1
+CLM000455,0.6477,1,212.67,Multiple elevated risk signals,0
+CLM000457,0.7543,1,2838.85,High prior claim history (17 claims),1
+CLM000462,0.7212,1,6173.62,Claim amount is 2.5x provider average; Claim amount >2x provider average; High prior claim history (17 claims),3

@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM003907
 Service Type  : Mental Health
 Diagnosis     : Diabetes
-Claimant Age  : 84
-Claim Amount  : $1,749.27
+Claimant Age  : 46
+Claim Amount  : $744.63
 
 --- CLINICAL NOTES ---
 Patient presented for counseling related to Diabetes condition.
@@ -21,8 +21,9 @@ Continued monitoring and follow-up recommended for Diabetes.
 Patient instructed on medication compliance and lifestyle modifications.
 Next appointment scheduled within 30-90 days depending on clinical response.
 
+FLAGS: Duplicate billing codes detected within recent submission window. Multiple suspicious keywords flagged by NLP screen.
 
 --- SUBMISSION METADATA ---
 Late Submission: No
-Duplicate Flag : No
-Suspicious Keywords Found: 0
+Duplicate Flag : Yes
+Suspicious Keywords Found: 3

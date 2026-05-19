@@ -3,13 +3,13 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM000487
 Service Type  : Emergency
 Diagnosis     : Oncology
-Claimant Age  : 69
-Claim Amount  : $646.78
+Claimant Age  : 70
+Claim Amount  : $4,674.87
 
 --- CLINICAL NOTES ---
 Patient presented for trauma care related to Oncology condition.
 Treating physician documented standard protocol adherence.
-Documentation is complete and consistent with clinical notes.
+Documentation appears incomplete; some fields missing or inconsistent.
 
 --- PROVIDER NOTES ---
 Provider certifies that all services were medically necessary and rendered as described.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 3
+Suspicious Keywords Found: 0

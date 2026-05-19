@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM002654
 Service Type  : Outpatient
 Diagnosis     : Mental Health
-Claimant Age  : 50
-Claim Amount  : $1,921.46
+Claimant Age  : 26
+Claim Amount  : $2,429.79
 
 --- CLINICAL NOTES ---
 Patient presented for diagnostic imaging related to Mental Health condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 3
+Suspicious Keywords Found: 0

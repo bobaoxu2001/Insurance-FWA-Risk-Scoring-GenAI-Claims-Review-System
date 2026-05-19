@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM000839
 Service Type  : Outpatient
 Diagnosis     : Diabetes
-Claimant Age  : 34
-Claim Amount  : $1,806.90
+Claimant Age  : 63
+Claim Amount  : $3,192.94
 
 --- CLINICAL NOTES ---
 Patient presented for office visit related to Diabetes condition.
@@ -21,8 +21,9 @@ Continued monitoring and follow-up recommended for Diabetes.
 Patient instructed on medication compliance and lifestyle modifications.
 Next appointment scheduled within 30-90 days depending on clinical response.
 
+FLAGS: Duplicate billing codes detected within recent submission window.
 
 --- SUBMISSION METADATA ---
-Late Submission: Yes
-Duplicate Flag : No
-Suspicious Keywords Found: 6
+Late Submission: No
+Duplicate Flag : Yes
+Suspicious Keywords Found: 1

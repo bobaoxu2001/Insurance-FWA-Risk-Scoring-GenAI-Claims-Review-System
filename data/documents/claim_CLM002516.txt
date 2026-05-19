@@ -3,13 +3,13 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM002516
 Service Type  : Inpatient
 Diagnosis     : Mental Health
-Claimant Age  : 45
-Claim Amount  : $4,003.51
+Claimant Age  : 52
+Claim Amount  : $6,767.89
 
 --- CLINICAL NOTES ---
 Patient presented for hospital admission related to Mental Health condition.
 Treating physician documented standard protocol adherence.
-Documentation appears incomplete; some fields missing or inconsistent.
+Documentation is complete and consistent with clinical notes.
 
 --- PROVIDER NOTES ---
 Provider certifies that all services were medically necessary and rendered as described.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 2
+Suspicious Keywords Found: 1

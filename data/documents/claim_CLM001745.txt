@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM001745
 Service Type  : Outpatient
 Diagnosis     : Gastrointestinal
-Claimant Age  : 31
-Claim Amount  : $1,702.75
+Claimant Age  : 39
+Claim Amount  : $2,205.73
 
 --- CLINICAL NOTES ---
 Patient presented for lab work related to Gastrointestinal condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 6
+Suspicious Keywords Found: 0

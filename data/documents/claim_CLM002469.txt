@@ -3,13 +3,13 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM002469
 Service Type  : Outpatient
 Diagnosis     : Mental Health
-Claimant Age  : 18
-Claim Amount  : $2,931.63
+Claimant Age  : 74
+Claim Amount  : $2,944.11
 
 --- CLINICAL NOTES ---
 Patient presented for lab work related to Mental Health condition.
 Treating physician documented standard protocol adherence.
-Documentation appears incomplete; some fields missing or inconsistent.
+Documentation is complete and consistent with clinical notes.
 
 --- PROVIDER NOTES ---
 Provider certifies that all services were medically necessary and rendered as described.

@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM004122
 Service Type  : Outpatient
 Diagnosis     : Diabetes
-Claimant Age  : 45
-Claim Amount  : $1,215.60
+Claimant Age  : 80
+Claim Amount  : $6,128.04
 
 --- CLINICAL NOTES ---
 Patient presented for lab work related to Diabetes condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 4
+Suspicious Keywords Found: 0

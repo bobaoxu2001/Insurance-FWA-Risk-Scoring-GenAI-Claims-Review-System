@@ -1,9 +1,18 @@
 """
-Streamlit Dashboard — Insurance FWA Risk Scoring & GenAI Claims Review System
+Streamlit dashboard — Insurance FWA Risk Scoring & GenAI Claims Review System.
+
+Six tabs:
+  1. Executive Overview
+  2. FWA Pattern Explorer
+  3. Model Performance
+  4. Claim Review Assistant
+  5. Model Monitoring & Data Quality
+  6. Auditability & Responsible AI
 """
 
 import os
 import json
+import sys
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -12,8 +21,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import joblib
 
-# ── Config ──────────────────────────────────────────────────────────────────
-import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config
 from src.utils import get_risk_level, format_currency
@@ -25,7 +32,15 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Data loading helpers ─────────────────────────────────────────────────────
+
+ID_LIKE_COLS = [
+    "claim_id", "policyholder_id", "provider_id", "claim_date",
+    "service_type", "diagnosis_group", "state",
+]
+EXCLUDE_FROM_MODEL = ["rule_based_risk_score"]
+
+
+# ── Data loading ────────────────────────────────────────────────────────────
 
 @st.cache_data
 def load_claims():
@@ -35,7 +50,10 @@ def load_claims():
         os.path.join(config.DATA_RAW,       "synthetic_claims.csv"),
     ]:
         if os.path.exists(p):
-            return pd.read_csv(p)
+            df = pd.read_csv(p)
+            if "claim_date" in df.columns:
+                df["claim_date"] = pd.to_datetime(df["claim_date"], errors="coerce")
+            return df
     return None
 
 
@@ -48,12 +66,28 @@ def load_metrics():
     return {}
 
 
+@st.cache_data
+def load_threshold_table():
+    p = os.path.join(config.OUTPUTS_REPORTS, "threshold_analysis.csv")
+    return pd.read_csv(p) if os.path.exists(p) else None
+
+
+@st.cache_data
+def load_monitoring_report():
+    p = os.path.join(config.OUTPUTS_REPORTS, "model_monitoring_report.csv")
+    return pd.read_csv(p) if os.path.exists(p) else None
+
+
+@st.cache_data
+def load_data_quality():
+    p = os.path.join(config.OUTPUTS_REPORTS, "data_quality_summary.csv")
+    return pd.read_csv(p) if os.path.exists(p) else None
+
+
 @st.cache_resource
 def load_model():
     p = os.path.join(config.OUTPUTS_MODELS, "best_fwa_model.pkl")
-    if os.path.exists(p):
-        return joblib.load(p)
-    return None
+    return joblib.load(p) if os.path.exists(p) else None
 
 
 def load_review(claim_id):
@@ -64,41 +98,43 @@ def load_review(claim_id):
     return None
 
 
-ID_LIKE_COLS = [
-    "claim_id", "policyholder_id", "provider_id", "claim_date",
-    "service_type", "diagnosis_group", "state",
-]
-
-
 def get_risk_scores(df, model):
     if model is None:
         return None
     feature_cols = [
         c for c in df.columns
-        if c not in ID_LIKE_COLS + ["fraud_label"]
+        if c not in ID_LIKE_COLS + ["fraud_label"] + EXCLUDE_FROM_MODEL
         and pd.api.types.is_numeric_dtype(df[c])
     ]
     try:
-        return model.predict_proba(df[feature_cols])[:, 1]
+        X = df[feature_cols].fillna(df[feature_cols].median(numeric_only=True))
+        return model.predict_proba(X)[:, 1]
     except Exception:
         return None
 
 
-# ── Sidebar ──────────────────────────────────────────────────────────────────
+# ── Sidebar ─────────────────────────────────────────────────────────────────
 
 st.sidebar.title("🛡️ FWA Risk Scoring")
 st.sidebar.markdown("**Insurance Fraud, Waste & Abuse Analytics**")
+st.sidebar.caption("Aligned to Long Term Care FWA — synthetic data only.")
 st.sidebar.markdown("---")
 tab_choice = st.sidebar.radio(
     "Navigate to",
-    ["Executive Overview", "FWA Pattern Explorer",
-     "Model Performance", "Claim Review Assistant",
-     "Auditability Notes"],
+    [
+        "Executive Overview",
+        "FWA Pattern Explorer",
+        "Model Performance",
+        "Claim Review Assistant",
+        "Model Monitoring & Data Quality",
+        "Auditability & Responsible AI",
+    ],
 )
 st.sidebar.markdown("---")
-st.sidebar.caption("Synthetic data only — for portfolio demonstration.")
+st.sidebar.caption("Portfolio demo — not clinical or production grade.")
 
-# ── Load data ────────────────────────────────────────────────────────────────
+
+# ── Load data ───────────────────────────────────────────────────────────────
 
 df      = load_claims()
 metrics = load_metrics()
@@ -117,7 +153,8 @@ if df is not None and model is not None:
 
 if tab_choice == "Executive Overview":
     st.title("📊 Executive Overview")
-    st.markdown("Key performance indicators and high-level FWA analytics.")
+    st.info("Synthetic claims dataset. Every prediction shown here is meant to be "
+            "reviewed by a human FWA analyst before any payment action is taken.")
 
     if df is None:
         st.warning("No claims data found. Run `python src/data_generation.py` first.")
@@ -137,10 +174,10 @@ if tab_choice == "Executive Overview":
         c1, c2, c3, c4, c5, c6 = st.columns(6)
         c1.metric("Total Claims",      f"{total_claims:,}")
         c2.metric("Fraud Rate",        f"{fraud_rate:.1%}")
-        c3.metric("Avg Claim Amount",  format_currency(avg_amount))
+        c3.metric("Avg Claim",         format_currency(avg_amount))
         c4.metric("High-Risk Claims",  f"{high_risk_cnt:,}" if isinstance(high_risk_cnt, int) else high_risk_cnt)
-        c5.metric("Best Model AUC",    best_auc)
-        c6.metric("Best Model F1",     best_f1)
+        c5.metric("Best AUC",          best_auc)
+        c6.metric("Best F1",           best_f1)
 
         st.markdown("---")
         col_a, col_b = st.columns(2)
@@ -150,30 +187,28 @@ if tab_choice == "Executive Overview":
             if "model_risk_score" in df.columns:
                 fig, ax = plt.subplots(figsize=(6, 3))
                 ax.hist(df["model_risk_score"], bins=40, color="#2196F3", edgecolor="white", alpha=0.8)
-                ax.axvline(config.HIGH_RISK_THRESHOLD, color="red", ls="--", label=f"High-Risk Threshold ({config.HIGH_RISK_THRESHOLD})")
+                ax.axvline(config.HIGH_RISK_THRESHOLD, color="red", ls="--",
+                           label=f"High threshold ({config.HIGH_RISK_THRESHOLD})")
                 ax.set_xlabel("Model Risk Score")
                 ax.set_ylabel("Count")
-                ax.set_title("Risk Score Distribution")
                 ax.legend()
-                st.pyplot(fig)
-                plt.close()
-            else:
-                st.info("Model risk scores not available.")
+                st.pyplot(fig); plt.close()
+                st.caption("Most claims sit at low risk; the long right tail is what the analyst team reviews first.")
 
         with col_b:
             st.subheader("Fraud Label Distribution")
             if "fraud_label" in df.columns:
                 counts = df["fraud_label"].value_counts().rename({0: "Legitimate", 1: "Fraudulent"})
                 fig, ax = plt.subplots(figsize=(5, 3))
-                colors = ["#4CAF50", "#F44336"]
-                ax.pie(counts, labels=counts.index, autopct="%1.1f%%", colors=colors,
+                ax.pie(counts, labels=counts.index, autopct="%1.1f%%",
+                       colors=["#4CAF50", "#F44336"],
                        startangle=90, wedgeprops={"edgecolor": "white", "linewidth": 2})
-                ax.set_title("Claim Fraud Distribution")
-                st.pyplot(fig)
-                plt.close()
+                st.pyplot(fig); plt.close()
+                st.caption("Class imbalance is realistic — fraud is rare, so we evaluate with PR / recall, "
+                           "not just accuracy.")
 
         st.markdown("---")
-        st.subheader("Most Recent High-Risk Claims")
+        st.subheader("Top 10 Highest-Risk Claims (model score)")
         if "model_risk_score" in df.columns:
             top_risky = df.nlargest(10, "model_risk_score")[
                 ["claim_id", "service_type", "claim_amount",
@@ -181,6 +216,8 @@ if tab_choice == "Executive Overview":
             ].reset_index(drop=True)
             top_risky["risk_level"] = top_risky["model_risk_score"].apply(get_risk_level)
             st.dataframe(top_risky, use_container_width=True)
+            st.caption("These are the claims an FWA analyst would queue first. "
+                       "`fraud_label` is shown for evaluation only — in production it would not be available.")
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -189,14 +226,16 @@ if tab_choice == "Executive Overview":
 
 elif tab_choice == "FWA Pattern Explorer":
     st.title("🔍 FWA Pattern Explorer")
+    st.info("Use these charts to understand WHERE fraud-like patterns concentrate "
+            "(service type, provider, documentation quality). This is what an analyst "
+            "would look at before drilling into individual claims.")
 
     if df is None:
         st.warning("No data available.")
     else:
         col1, col2 = st.columns(2)
-
         with col1:
-            st.subheader("Claim Amount Distribution")
+            st.subheader("Claim Amount by Fraud Label")
             fig, ax = plt.subplots(figsize=(6, 4))
             fraud_0 = df[df["fraud_label"] == 0]["claim_amount"] if "fraud_label" in df.columns else df["claim_amount"]
             fraud_1 = df[df["fraud_label"] == 1]["claim_amount"] if "fraud_label" in df.columns else None
@@ -204,11 +243,10 @@ elif tab_choice == "FWA Pattern Explorer":
             if fraud_1 is not None:
                 ax.hist(fraud_1.clip(upper=50000), bins=50, alpha=0.6, label="Fraudulent", color="#F44336")
             ax.set_xlabel("Claim Amount ($)")
-            ax.set_ylabel("Count")
-            ax.set_title("Claim Amount by Fraud Label")
             ax.legend()
-            st.pyplot(fig)
-            plt.close()
+            st.pyplot(fig); plt.close()
+            st.caption("Fraudulent claims skew higher but overlap heavily with legit "
+                       "high-cost claims (e.g. inpatient, oncology) — amount alone is not enough.")
 
         with col2:
             st.subheader("Fraud Rate by Service Type")
@@ -220,18 +258,16 @@ elif tab_choice == "FWA Pattern Explorer":
                     .sort_values("fraud_rate", ascending=True)
                 )
                 fig, ax = plt.subplots(figsize=(6, 4))
-                bars = ax.barh(st_fraud.index, st_fraud["fraud_rate"] * 100,
-                               color=plt.cm.RdYlGn_r(np.linspace(0.2, 0.8, len(st_fraud))))
+                ax.barh(st_fraud.index, st_fraud["fraud_rate"] * 100,
+                        color=plt.cm.RdYlGn_r(np.linspace(0.2, 0.8, len(st_fraud))))
                 ax.set_xlabel("Fraud Rate (%)")
-                ax.set_title("Fraud Rate by Service Type")
-                st.pyplot(fig)
-                plt.close()
+                st.pyplot(fig); plt.close()
+                st.caption("Service-type fraud-rate ranking informs where to deploy targeted reviewer capacity.")
 
         st.markdown("---")
         col3, col4 = st.columns(2)
-
         with col3:
-            st.subheader("Provider Risk Ranking (Top 15)")
+            st.subheader("Top 15 Risky Providers (by avg model score)")
             if "provider_id" in df.columns and "model_risk_score" in df.columns:
                 prov_risk = (
                     df.groupby("provider_id")
@@ -247,10 +283,11 @@ elif tab_choice == "FWA Pattern Explorer":
                 prov_risk["avg_risk_score"] = prov_risk["avg_risk_score"].round(3)
                 prov_risk["fraud_rate"]     = (prov_risk["fraud_rate"] * 100).round(1)
                 st.dataframe(prov_risk, use_container_width=True)
+                st.caption("Provider-level aggregation is the unit of investigation for most FWA programs.")
 
         with col4:
-            st.subheader("Documentation Score vs Fraud")
-            if "documentation_score" in df.columns and "fraud_label" in df.columns:
+            st.subheader("Documentation Score vs Claim Amount")
+            if "documentation_score" in df.columns:
                 fig, ax = plt.subplots(figsize=(6, 4))
                 sample = df.sample(min(1000, len(df)), random_state=42)
                 colors = sample["fraud_label"].map({0: "#4CAF50", 1: "#F44336"})
@@ -258,19 +295,9 @@ elif tab_choice == "FWA Pattern Explorer":
                            c=colors, alpha=0.4, s=12)
                 ax.set_xlabel("Documentation Score")
                 ax.set_ylabel("Claim Amount ($)")
-                ax.set_title("Documentation Score vs Claim Amount")
-                st.pyplot(fig)
-                plt.close()
-
-        st.markdown("---")
-        st.subheader("Top Suspicious Claims (High Keyword Count)")
-        if "suspicious_keyword_count" in df.columns:
-            suspicious = df.nlargest(20, "suspicious_keyword_count")[
-                ["claim_id", "provider_id", "service_type", "claim_amount",
-                 "suspicious_keyword_count", "duplicate_claim_flag",
-                 "late_submission_flag", "fraud_label"]
-            ].reset_index(drop=True)
-            st.dataframe(suspicious, use_container_width=True)
+                st.pyplot(fig); plt.close()
+                st.caption("Low documentation + high amount is a classic FWA red zone, but plenty of "
+                           "legitimate claims also have sloppy paperwork.")
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -279,6 +306,10 @@ elif tab_choice == "FWA Pattern Explorer":
 
 elif tab_choice == "Model Performance":
     st.title("🤖 Model Performance")
+    st.info("Because fraud is rare, the precision-recall tradeoff matters more "
+            "than raw accuracy. A precision-oriented threshold sends fewer false "
+            "positives to analysts; a recall-oriented threshold catches more fraud "
+            "at the cost of more reviews.")
 
     if not metrics:
         st.warning("No model metrics found. Run `python src/modeling.py` first.")
@@ -291,31 +322,54 @@ elif tab_choice == "Model Performance":
 
     st.markdown("---")
     col1, col2 = st.columns(2)
-
     conf_path = os.path.join(config.OUTPUTS_FIGURES, "confusion_matrix.png")
     roc_path  = os.path.join(config.OUTPUTS_FIGURES, "roc_curve.png")
+    pr_path   = os.path.join(config.OUTPUTS_FIGURES, "precision_recall_curve.png")
     fi_path   = os.path.join(config.OUTPUTS_FIGURES, "feature_importance.png")
 
     with col1:
         st.subheader("Confusion Matrix")
         if os.path.exists(conf_path):
             st.image(conf_path, use_container_width=True)
+            st.caption("Top-right = missed fraud (worst kind of error for FWA).")
         else:
-            st.info("Confusion matrix not found. Run `python src/modeling.py`.")
+            st.info("Run `python src/modeling.py`.")
 
     with col2:
         st.subheader("ROC Curves")
         if os.path.exists(roc_path):
             st.image(roc_path, use_container_width=True)
+            st.caption("ROC summarizes ranking quality but can look optimistic on imbalanced data.")
         else:
-            st.info("ROC curve not found. Run `python src/modeling.py`.")
+            st.info("Run `python src/modeling.py`.")
+
+    st.markdown("---")
+    col3, col4 = st.columns([2, 3])
+    with col3:
+        st.subheader("Precision-Recall Curve")
+        if os.path.exists(pr_path):
+            st.image(pr_path, use_container_width=True)
+            st.caption("This is the chart we actually optimize against in FWA — "
+                       "it tells you how much precision you lose to catch more fraud.")
+        else:
+            st.info("Run `python src/modeling.py` to generate PR curve.")
+
+    with col4:
+        st.subheader("Threshold Sweep")
+        thr = load_threshold_table()
+        if thr is not None:
+            st.dataframe(thr, use_container_width=True, height=320)
+            st.caption("Lowering the threshold flags more claims (higher recall, lower precision). "
+                       "Operations teams pick the threshold based on reviewer capacity.")
+        else:
+            st.info("Threshold analysis not found. Run `python src/modeling.py`.")
 
     st.markdown("---")
     st.subheader("Feature Importance")
     if os.path.exists(fi_path):
         st.image(fi_path, use_container_width=True)
-    else:
-        st.info("Feature importance plot not found. Run `python src/modeling.py`.")
+        st.caption("Importance ranks observable features only — hidden latent drivers "
+                   "(provider integrity, policyholder propensity) are intentionally NOT exposed to the model.")
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -324,80 +378,48 @@ elif tab_choice == "Model Performance":
 
 elif tab_choice == "Claim Review Assistant":
     st.title("🔎 Claim Review Assistant")
-    st.markdown("Select a claim to view its risk profile and AI-generated review summary.")
+    st.info("Pick a claim → the assistant retrieves the most relevant policy "
+            "language and renders an analyst-ready review packet.")
 
     if df is None:
         st.warning("No claims data found.")
     else:
-        claim_ids = df["claim_id"].dropna().tolist() if "claim_id" in df.columns else []
-        selected_id = st.selectbox("Select Claim ID", claim_ids, index=0)
+        # Prefer claims that already have pre-generated reviews (richer demo)
+        review_dir = config.OUTPUTS_REVIEWS
+        precomputed = []
+        if os.path.isdir(review_dir):
+            precomputed = sorted([
+                f.replace("review_", "").replace(".txt", "")
+                for f in os.listdir(review_dir) if f.startswith("review_") and f.endswith(".txt")
+            ])
+
+        all_ids = df["claim_id"].dropna().tolist() if "claim_id" in df.columns else []
+        default_ids = precomputed if precomputed else all_ids
+        selected_id = st.selectbox(
+            "Select Claim ID (pre-generated reviews appear first)",
+            default_ids + [c for c in all_ids if c not in default_ids],
+            index=0,
+        )
 
         if selected_id:
             row = df[df["claim_id"] == selected_id].iloc[0]
 
-            col1, col2, col3, col4 = st.columns(4)
             risk_score = row.get("model_risk_score", row.get("rule_based_risk_score", 0.0))
             risk_level = get_risk_level(risk_score)
+            risk_color = {"Low": "🟢", "Medium": "🟡", "High": "🔴"}.get(risk_level, "⚪")
 
-            risk_color = {"Low": "green", "Medium": "orange", "High": "red"}.get(risk_level, "gray")
-
+            col1, col2, col3, col4 = st.columns(4)
             col1.metric("Risk Score", f"{risk_score:.3f}")
-            col2.metric("Risk Level", risk_level)
+            col2.metric("Risk Level", f"{risk_color} {risk_level}")
             col3.metric("Claim Amount", format_currency(row.get("claim_amount", 0)))
-            col4.metric("Fraud Label", "Yes" if row.get("fraud_label", 0) == 1 else "No")
+            col4.metric("Approved", format_currency(row.get("approved_amount", 0)))
 
             st.markdown("---")
-            col_a, col_b = st.columns(2)
-
-            with col_a:
-                st.subheader("Claim Details")
-                detail_fields = [
-                    "service_type", "diagnosis_group", "state",
-                    "claimant_age", "provider_id", "days_since_policy_start",
-                    "prior_claim_count", "provider_claim_volume",
-                    "provider_avg_claim_amount", "approved_amount",
-                ]
-                detail_df = pd.DataFrame(
-                    [(f, row.get(f, "N/A")) for f in detail_fields if f in row.index],
-                    columns=["Field", "Value"]
-                )
-                st.dataframe(detail_df, use_container_width=True)
-
-            with col_b:
-                st.subheader("Top Risk Indicators")
-                indicators = []
-                ratio = row.get("claim_to_provider_avg_ratio", 1.0)
-                if not pd.isna(ratio) and ratio > 1.5:
-                    indicators.append(f"Claim amount is **{ratio:.1f}x** provider average")
-                if row.get("documentation_score", 1.0) < 0.4:
-                    indicators.append(f"Low documentation score: **{row.get('documentation_score', 0):.2f}**")
-                if row.get("duplicate_claim_flag", 0) == 1:
-                    indicators.append("**Duplicate claim** flag triggered")
-                if row.get("late_submission_flag", 0) == 1:
-                    indicators.append("**Late submission** flag triggered")
-                if row.get("suspicious_keyword_count", 0) >= 3:
-                    indicators.append(f"**{int(row['suspicious_keyword_count'])}** suspicious keywords detected")
-                if row.get("high_cost_outlier_flag", 0) == 1:
-                    indicators.append("**High-cost outlier** (top 10%)")
-
-                if indicators:
-                    for ind in indicators:
-                        st.markdown(f"- {ind}")
-                else:
-                    st.markdown("No single dominant indicator; composite score elevated.")
-
-            st.markdown("---")
-            st.subheader("AI-Generated Review Summary (RAG)")
+            st.subheader("AI-Generated Review (RAG)")
             review_text = load_review(selected_id)
             if review_text:
                 st.code(review_text, language="text")
             else:
-                st.info(
-                    "No pre-generated review found for this claim. "
-                    "Run `python src/rag_claim_review.py` to generate reviews for high-risk claims, "
-                    "or a review will be auto-generated here."
-                )
-                # Auto-generate on the fly
                 try:
                     from src.rag_claim_review import (
                         load_policy_rules, build_policy_index, generate_review
@@ -417,57 +439,112 @@ elif tab_choice == "Claim Review Assistant":
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# TAB 5 — Auditability Notes
+# TAB 5 — Model Monitoring & Data Quality
 # ════════════════════════════════════════════════════════════════════════════
 
-elif tab_choice == "Auditability Notes":
-    st.title("📋 Auditability & Responsible AI Notes")
+elif tab_choice == "Model Monitoring & Data Quality":
+    st.title("📈 Model Monitoring & Data Quality")
+    st.info("A model is only as good as the data feeding it. This tab tracks "
+            "volume, label drift, dollar drift, and column-level quality — the "
+            "minimum monitoring surface any production FWA system needs.")
+
+    report = load_monitoring_report()
+    qa = load_data_quality()
+
+    if report is None:
+        st.warning("No monitoring report found. Run `python src/monitoring.py` first.")
+    else:
+        st.subheader("Monthly Claim Volume & Fraud Rate")
+        col1, col2 = st.columns(2)
+        with col1:
+            p = os.path.join(config.OUTPUTS_FIGURES, "monthly_fraud_rate.png")
+            if os.path.exists(p):
+                st.image(p, use_container_width=True)
+                st.caption("Sudden spikes in fraud rate are a label-drift / data-pipeline alarm.")
+        with col2:
+            p = os.path.join(config.OUTPUTS_FIGURES, "claim_amount_drift.png")
+            if os.path.exists(p):
+                st.image(p, use_container_width=True)
+                st.caption("Mean vs P95 separation tells you whether drift is broad or tail-only.")
+
+        st.subheader("Monthly Monitoring Report")
+        st.dataframe(report, use_container_width=True)
+        st.caption("In production this table would be re-computed daily and compared "
+                   "against a rolling baseline to fire PSI / KS drift alerts.")
+
+    st.markdown("---")
+    st.subheader("Data Quality — Column Summary")
+    if qa is not None:
+        st.dataframe(qa, use_container_width=True, height=400)
+        st.caption("Missing rates, unique counts, and dtypes — the first thing to "
+                   "check when a model suddenly degrades.")
+    else:
+        st.info("Run `python src/monitoring.py` to generate the data-quality summary.")
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 6 — Auditability & Responsible AI
+# ════════════════════════════════════════════════════════════════════════════
+
+else:  # "Auditability & Responsible AI"
+    st.title("📋 Auditability & Responsible AI")
 
     st.markdown("""
-## Synthetic Data Disclaimer
-All data in this system is **synthetically generated** using NumPy random distributions.
-No real patient, provider, or claims data is used. The dataset is designed to simulate realistic
-FWA patterns for portfolio and educational purposes only.
+### Synthetic Data Disclaimer
+All data is **synthetic** (NumPy / pandas generators). No PHI, PII, or real
+claims data is used. This project is a portfolio demonstration of FWA analytics
+patterns relevant to Long Term Care insurance — not a clinical or production tool.
 
 ---
-## Model Assumptions
-- **Fraud labels** are derived from a sigmoid-transformed composite risk score based on domain-relevant
-  features (claim amount vs provider average, documentation quality, duplicate flags, etc.)
-- **Class imbalance** (~8% fraud rate) is addressed via `class_weight='balanced'` in supervised models
-  and `contamination` parameter in Isolation Forest.
-- **Train/test split**: 80/20 stratified split ensures the fraud rate is preserved across splits.
-- Models are trained on engineered features including ratios, flags, and normalized scores.
+### Why the Metrics Are Interpreted Carefully
+- Labels come from a *known* data-generating process, so any model that recovers
+  enough of that process can score very high. To avoid trivial leakage, the
+  fraud label is driven by a **hidden intent variable** plus heavy stochastic
+  noise; only **noisy proxies** are exposed to the model.
+- Even so, headline AUC/F1 should be read as **upper bounds** on what a real
+  model could achieve — real claims data has label noise, regime shifts, and
+  adversarial behavior that synthetic data cannot reproduce.
+- We report both ROC and Precision-Recall metrics, and we publish a full
+  threshold sweep so operations can pick the precision/recall point that
+  matches reviewer capacity.
 
 ---
-## GenAI / RAG Limitations
-- The **RAG claim review** module uses **TF-IDF cosine similarity** — not a large language model.
-  This approach is fully deterministic, requires no API keys, and is reproducible.
-- Retrieved policy evidence is **approximate** — similarity scores depend on vocabulary overlap,
-  not semantic understanding.
-- Review summaries are **template-based**, not generatively hallucinated. Every field is
-  deterministically derived from claim data and policy document retrieval.
-- A real production RAG system would use dense embeddings (e.g., sentence-transformers)
-  and an LLM for natural-language generation.
+### Model Assumptions
+- **Class imbalance** (~7-9% fraud) handled via `class_weight='balanced'` for
+  LR / RF and `scale_pos_weight` for XGBoost.
+- **80/20 stratified split**, fraud rate preserved across splits.
+- `rule_based_risk_score` is excluded from model inputs — it is a transparent
+  baseline for dashboards, not a feature.
 
 ---
-## Human-in-the-Loop
-- **This system is designed to assist, not replace, human analysts.**
-- All HIGH-risk recommendations require human review before payment suspension or denial.
-- Model scores are probabilistic; a high score indicates elevated risk, not confirmed fraud.
-- Final adjudication must involve a licensed insurance professional with access to
-  complete medical records and provider attestation.
+### GenAI / RAG Limitations
+- The claim-review module uses **TF-IDF cosine similarity** over a policy-rules
+  corpus, not an LLM. Output is fully deterministic and requires no external
+  API keys.
+- Template-based generation means no hallucinated facts — every field is sourced
+  from claim data or retrieved policy text.
+- A real production stack would use dense embeddings (e.g. sentence-transformers)
+  plus an LLM with **citation guardrails** and **prompt-injection defenses**.
 
 ---
-## Bias & Fairness Considerations
+### Human-in-the-Loop
+- Every HIGH-risk recommendation **must** be reviewed by a licensed analyst
+  before any payment suspension or denial.
+- The model produces probabilities, not verdicts. Final adjudication remains
+  with humans who can access complete medical records and provider attestations.
+
+---
+### Bias & Fairness Considerations
 - No demographic features (race, gender, religion) are used as model inputs.
-- Age is included as a clinical indicator, not a discriminatory factor.
-- Fraud labels are based on behavioral signals, not identity characteristics.
-- Regular retraining and fairness audits would be required in production deployment.
+- Age is included only as a clinical indicator.
+- Fraud labels are based on behavioral signals, not identity.
+- In production: scheduled fairness audits, segmented PR analysis, and
+  reviewer-feedback loops to detect drift in false-positive disparities.
 
 ---
-## Data Governance
-- In production, all claims data would be subject to HIPAA privacy protections.
-- Audit logs of all model predictions and analyst actions would be maintained.
-- Model versioning and drift monitoring would be implemented.
-- Explainability reports (feature importance, SHAP values) would accompany each risk score.
+### Data Governance
+- HIPAA / state privacy rules would apply to all real claims data.
+- Audit logs for every prediction and analyst action.
+- Model registry + version pinning + rollback procedures.
+- Drift monitoring (PSI, KS) on key features and on label rate.
 """)

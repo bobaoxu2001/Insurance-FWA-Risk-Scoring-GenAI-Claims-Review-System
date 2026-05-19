@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM000066
 Service Type  : Vision
 Diagnosis     : Mental Health
-Claimant Age  : 70
-Claim Amount  : $675.71
+Claimant Age  : 26
+Claim Amount  : $3,954.55
 
 --- CLINICAL NOTES ---
 Patient presented for contact lens fitting related to Mental Health condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 5
+Suspicious Keywords Found: 0

@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM000795
 Service Type  : Mental Health
 Diagnosis     : Musculoskeletal
-Claimant Age  : 62
-Claim Amount  : $1,123.04
+Claimant Age  : 70
+Claim Amount  : $1,171.13
 
 --- CLINICAL NOTES ---
 Patient presented for counseling related to Musculoskeletal condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 7
+Suspicious Keywords Found: 2

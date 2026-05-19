@@ -1,0 +1,62 @@
+
+==================================================================
+INSURANCE FWA CLAIM REVIEW REPORT  (AI-assisted, human-in-the-loop)
+==================================================================
+Claim ID         : CLM002243
+Risk Level       : HIGH
+Model Risk Score : 0.9323
+Service Type     : Pharmacy
+Diagnosis Group  : Oncology
+Claim Amount     : $17,088.10
+Approved Amount  : $3,892.26
+Provider ID      : PR0074
+State            : NY
+
+------------------------------------------------------------------
+KEY RISK INDICATORS
+------------------------------------------------------------------
+  - Claim amount is 21.0x the provider's average billing
+  - Low documentation completeness score (0.35 / 1.00)
+  - Submitted outside the 90-day window
+  - 5 suspicious keywords detected in claim narrative
+  - Historical approval ratio low (0.23)
+
+------------------------------------------------------------------
+RETRIEVED POLICY EVIDENCE  (TF-IDF cosine similarity)
+------------------------------------------------------------------
+Query: "late claim submission over 90 days suspicious keywords documentation fraud incomplete medical records documentation standards claim amount exceeds provider average upcoding pharmacy claim quantity dosage protocol"
+
+  [1] (similarity=0.277) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW    6.1 Claim amount exceeds 200% of provider's average claim amount.    6.2 More than 3 claims from same provider-beneficiary pair within 30 days.    6.3 Services billed on weekends or holidays for non-emergency care.    6.4 Speci...
+  [2] (similarity=0.230) 4. DOCUMENTATION STANDARDS    4.1 Medical records must support the level of service billed.    4.2 Physician signatures required on all orders and certifications.    4.3 Electronic health records must include audit trails.    4.4 Incomplete or altered documentation triggers autom...
+  [3] (similarity=0.140) 2. CLAIM SUBMISSION REQUIREMENTS    2.1 Claims must be submitted within 90 days of service date.    2.2 All claims require valid diagnosis codes (ICD-10) and procedure codes (CPT/HCPCS).    2.3 Duplicate claims for the same service, date, and beneficiary are prohibited.    2.4 Cl...
+
+------------------------------------------------------------------
+DOCUMENTATION GAPS
+------------------------------------------------------------------
+  - Clinical notes appear incomplete / inconsistent
+  - No clinical justification for >90-day submission delay
+  - Narrative contains language patterns flagged by NLP screen
+
+------------------------------------------------------------------
+SUGGESTED ANALYST ACTION
+------------------------------------------------------------------
+SUSPEND PAYMENT pending senior-analyst review. Request complete medical records, provider attestation, and any supporting plan-of-care within 10 business days. Escalate to SIU if pattern repeats.
+
+------------------------------------------------------------------
+HUMAN REVIEW NOTES  (what an analyst should verify)
+------------------------------------------------------------------
+  - Verify provider NPI is active and not on the OIG exclusion list
+  - Cross-check date of service against beneficiary's other recent claims
+  - Confirm diagnosis codes are consistent with rendered procedures
+  - Request signed plan-of-care and (for LTC) caregiver visit logs
+  - Compare billed units against standard utilization for this CPT
+  - Request complete EHR audit trail covering the date of service
+
+------------------------------------------------------------------
+LIMITATIONS
+------------------------------------------------------------------
+  - Data is fully synthetic; do NOT use any specific value as evidence of real fraud.
+  - Model probabilities are calibrated only against the synthetic generating process.
+  - Retrieval is TF-IDF, not semantic — relevant policy text may be missed if vocabulary differs.
+  - All HIGH-risk recommendations require a licensed analyst before any payment action.
+==================================================================

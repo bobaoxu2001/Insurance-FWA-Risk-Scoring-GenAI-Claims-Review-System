@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM004636
 Service Type  : Pharmacy
 Diagnosis     : Other
-Claimant Age  : 33
-Claim Amount  : $1,501.74
+Claimant Age  : 55
+Claim Amount  : $477.87
 
 --- CLINICAL NOTES ---
 Patient presented for specialty drug related to Other condition.
@@ -23,6 +23,6 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 
 
 --- SUBMISSION METADATA ---
-Late Submission: Yes
+Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 1
+Suspicious Keywords Found: 0

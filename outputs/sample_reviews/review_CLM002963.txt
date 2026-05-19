@@ -1,0 +1,54 @@
+
+==================================================================
+INSURANCE FWA CLAIM REVIEW REPORT  (AI-assisted, human-in-the-loop)
+==================================================================
+Claim ID         : CLM002963
+Risk Level       : LOW
+Model Risk Score : 0.2540
+Service Type     : Inpatient
+Diagnosis Group  : Cardiovascular
+Claim Amount     : $17,176.47
+Approved Amount  : $13,276.04
+Provider ID      : PR0179
+State            : NC
+
+------------------------------------------------------------------
+KEY RISK INDICATORS
+------------------------------------------------------------------
+  - Claim amount is 2.6x the provider's average billing
+  - Elevated prior claim history (14 claims)
+
+------------------------------------------------------------------
+RETRIEVED POLICY EVIDENCE  (TF-IDF cosine similarity)
+------------------------------------------------------------------
+Query: "claim amount exceeds provider average upcoding"
+
+  [1] (similarity=0.334) 6. HIGH-RISK INDICATORS REQUIRING ENHANCED REVIEW    6.1 Claim amount exceeds 200% of provider's average claim amount.    6.2 More than 3 claims from same provider-beneficiary pair within 30 days.    6.3 Services billed on weekends or holidays for non-emergency care.    6.4 Speci...
+  [2] (similarity=0.057) 5. PROVIDER ELIGIBILITY    5.1 Providers must maintain active licensure in the state of service.    5.2 Excluded providers (OIG exclusion list) may not submit claims.    5.3 Provider credentialing must be current and verified annually....
+  [3] (similarity=0.049) 7. ANOMALY THRESHOLDS    7.1 Provider billing volume >2 standard deviations above peer group: requires review.    7.2 Beneficiary with >15 claims per year: requires utilization management review.    7.3 Late submissions (>90 days): require clinical justification.    7.4 Approval ...
+
+------------------------------------------------------------------
+DOCUMENTATION GAPS
+------------------------------------------------------------------
+  - No documentation gaps detected by automated screen
+
+------------------------------------------------------------------
+SUGGESTED ANALYST ACTION
+------------------------------------------------------------------
+STANDARD PROCESSING. Include in next routine audit sample (10% sampling).
+
+------------------------------------------------------------------
+HUMAN REVIEW NOTES  (what an analyst should verify)
+------------------------------------------------------------------
+  - Verify provider NPI is active and not on the OIG exclusion list
+  - Cross-check date of service against beneficiary's other recent claims
+  - Confirm diagnosis codes are consistent with rendered procedures
+
+------------------------------------------------------------------
+LIMITATIONS
+------------------------------------------------------------------
+  - Data is fully synthetic; do NOT use any specific value as evidence of real fraud.
+  - Model probabilities are calibrated only against the synthetic generating process.
+  - Retrieval is TF-IDF, not semantic — relevant policy text may be missed if vocabulary differs.
+  - All HIGH-risk recommendations require a licensed analyst before any payment action.
+==================================================================

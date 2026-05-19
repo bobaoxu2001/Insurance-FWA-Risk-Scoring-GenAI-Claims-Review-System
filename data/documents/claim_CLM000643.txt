@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM000643
 Service Type  : Outpatient
 Diagnosis     : Gastrointestinal
-Claimant Age  : 48
-Claim Amount  : $4,094.61
+Claimant Age  : 34
+Claim Amount  : $816.69
 
 --- CLINICAL NOTES ---
 Patient presented for lab work related to Gastrointestinal condition.
@@ -21,8 +21,9 @@ Continued monitoring and follow-up recommended for Gastrointestinal.
 Patient instructed on medication compliance and lifestyle modifications.
 Next appointment scheduled within 30-90 days depending on clinical response.
 
+FLAGS: Submission received outside the 90-day window.
 
 --- SUBMISSION METADATA ---
-Late Submission: No
+Late Submission: Yes
 Duplicate Flag : No
-Suspicious Keywords Found: 2
+Suspicious Keywords Found: 0

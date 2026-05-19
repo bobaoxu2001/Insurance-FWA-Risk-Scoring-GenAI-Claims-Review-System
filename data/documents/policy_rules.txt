@@ -45,7 +45,7 @@ INSURANCE POLICY RULES AND COMPLIANCE GUIDELINES
 
 8. ESCALATION PROCEDURES
    8.1 Risk score >= 0.6 (High): Immediate analyst review, potential payment suspension.
-   8.2 Risk score 0.3–0.59 (Medium): Enhanced review within 5 business days.
+   8.2 Risk score 0.3-0.59 (Medium): Enhanced review within 5 business days.
    8.3 Risk score < 0.3 (Low): Standard processing, routine audit sampling.
 
 9. APPEAL RIGHTS
@@ -58,3 +58,10 @@ INSURANCE POLICY RULES AND COMPLIANCE GUIDELINES
     10.2 HIPAA privacy and security rules apply to all claim records.
     10.3 False Claims Act penalties apply to knowingly fraudulent submissions.
     10.4 State insurance department regulations supersede when more restrictive.
+
+11. LONG TERM CARE (LTC) SPECIFIC GUIDELINES
+    11.1 LTC claims must include a current plan of care signed by the attending physician.
+    11.2 Activities of Daily Living (ADL) deficits must be documented by a licensed assessor.
+    11.3 Home health agency claims require visit logs with caregiver signature.
+    11.4 Cognitive impairment determinations require standardized assessment (e.g., MMSE/MoCA).
+    11.5 Duplicate caregiver billing across overlapping shifts is a high-priority FWA pattern.

@@ -3,13 +3,13 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM000590
 Service Type  : Inpatient
 Diagnosis     : Cardiovascular
-Claimant Age  : 39
-Claim Amount  : $29,617.66
+Claimant Age  : 70
+Claim Amount  : $14,508.68
 
 --- CLINICAL NOTES ---
 Patient presented for hospital admission related to Cardiovascular condition.
 Treating physician documented standard protocol adherence.
-Documentation appears incomplete; some fields missing or inconsistent.
+Documentation is complete and consistent with clinical notes.
 
 --- PROVIDER NOTES ---
 Provider certifies that all services were medically necessary and rendered as described.
@@ -21,9 +21,8 @@ Continued monitoring and follow-up recommended for Cardiovascular.
 Patient instructed on medication compliance and lifestyle modifications.
 Next appointment scheduled within 30-90 days depending on clinical response.
 
-CAUTION: Claim flagged for review. Duplicate billing codes detected. Provider has submitted similar claims within 30 days. Billed amount significantly exceeds provider average for this service.
 
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 2
+Suspicious Keywords Found: 0

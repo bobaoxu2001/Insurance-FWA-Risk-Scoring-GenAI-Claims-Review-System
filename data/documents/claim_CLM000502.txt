@@ -4,7 +4,7 @@ Claim ID      : CLM000502
 Service Type  : Vision
 Diagnosis     : Other
 Claimant Age  : 71
-Claim Amount  : $11,770.86
+Claim Amount  : $1,634.97
 
 --- CLINICAL NOTES ---
 Patient presented for contact lens fitting related to Other condition.
@@ -25,4 +25,4 @@ Next appointment scheduled within 30-90 days depending on clinical response.
 --- SUBMISSION METADATA ---
 Late Submission: No
 Duplicate Flag : No
-Suspicious Keywords Found: 3
+Suspicious Keywords Found: 0

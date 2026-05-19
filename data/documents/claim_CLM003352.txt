@@ -3,8 +3,8 @@ INSURANCE CLAIM DOCUMENT
 Claim ID      : CLM003352
 Service Type  : Outpatient
 Diagnosis     : Diabetes
-Claimant Age  : 59
-Claim Amount  : $4,027.41
+Claimant Age  : 36
+Claim Amount  : $920.52
 
 --- CLINICAL NOTES ---
 Patient presented for office visit related to Diabetes condition.

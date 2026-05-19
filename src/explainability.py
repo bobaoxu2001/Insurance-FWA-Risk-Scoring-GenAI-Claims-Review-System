@@ -24,12 +24,13 @@ ID_LIKE_COLS = [
     "claim_id", "policyholder_id", "provider_id", "claim_date",
     "service_type", "diagnosis_group", "state",
 ]
+EXCLUDE_FROM_MODEL = ["rule_based_risk_score"]
 
 
 def _get_feature_cols(df, target="fraud_label"):
     return [
         c for c in df.columns
-        if c not in ID_LIKE_COLS + [target]
+        if c not in ID_LIKE_COLS + [target] + EXCLUDE_FROM_MODEL
         and pd.api.types.is_numeric_dtype(df[c])
     ]
 
@@ -55,15 +56,27 @@ def load_model_and_data():
 
 def get_feature_importance(model, df):
     feature_cols = _get_feature_cols(df)
-    X = df[feature_cols]
+    X = df[feature_cols].fillna(df[feature_cols].median(numeric_only=True))
 
-    if HAS_SHAP:
-        print("  Using SHAP for feature importance...")
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X.sample(500, random_state=42))
-        if isinstance(shap_values, list):
-            shap_values = shap_values[1]
-        importances = np.abs(shap_values).mean(axis=0)
+    if HAS_SHAP and hasattr(model, "estimators_"):
+        try:
+            print("  Using SHAP for feature importance...")
+            explainer = shap.TreeExplainer(model)
+            sv = explainer.shap_values(X.sample(min(500, len(X)), random_state=42))
+            if isinstance(sv, list):
+                sv = sv[1]
+            sv = np.asarray(sv)
+            if sv.ndim == 3:  # newer SHAP returns (n, p, k)
+                sv = sv[..., 1] if sv.shape[-1] == 2 else sv.mean(axis=-1)
+            importances = np.abs(sv).mean(axis=0)
+            if importances.shape[0] != len(feature_cols):
+                raise ValueError("SHAP feature dimension mismatch; falling back")
+        except Exception as e:
+            print(f"  SHAP failed ({e}); falling back to model importances.")
+            importances = (
+                model.feature_importances_ if hasattr(model, "feature_importances_")
+                else np.abs(model.coef_[0])
+            )
     elif hasattr(model, "feature_importances_"):
         importances = model.feature_importances_
     elif hasattr(model, "coef_"):
@@ -93,7 +106,7 @@ def save_top_risk_factors(fi_df):
 
 def generate_claim_explanations(model, df):
     feature_cols = _get_feature_cols(df)
-    X = df[feature_cols]
+    X = df[feature_cols].fillna(df[feature_cols].median(numeric_only=True))
     y_prob = model.predict_proba(X)[:, 1]
 
     df = df.copy()
@@ -138,9 +151,9 @@ def generate_claim_explanations(model, df):
                 f"{int(row['suspicious_keyword_count'])} suspicious keywords detected"
             )
 
-        # High cost outlier
-        if row.get("high_cost_outlier_flag", 0) == 1:
-            explanation_parts.append("Claim amount in top 10% (high-cost outlier)")
+        # High amount vs provider average (replacement for retired high_cost_outlier_flag)
+        if row.get("high_amount_risk_flag", 0) == 1:
+            explanation_parts.append("Claim amount >2x provider average")
 
         # Prior claims
         if row.get("prior_claim_count", 0) > 10:

@@ -23,13 +23,18 @@ def load_data():
 
 
 def create_features(df):
-    """Add engineered features to the dataframe."""
+    """
+    Add engineered features. NOTE: we intentionally avoid features that are
+    near-deterministic functions of the (hidden) fraud_label. All engineered
+    features below are derived from columns that an analyst could observe at
+    claim-intake time.
+    """
     # Ratio of claim amount to provider average
     df["claim_to_provider_avg_ratio"] = (
         df["claim_amount"] / (df["provider_avg_claim_amount"] + 1e-6)
     ).round(4)
 
-    # Approval ratio
+    # Approval ratio (post-adjudication signal; useful but noisy)
     df["approval_ratio"] = (
         df["approved_amount"] / (df["claim_amount"] + 1e-6)
     ).round(4)
@@ -54,8 +59,11 @@ def create_features(df):
     # Suspicious text risk flag
     df["suspicious_text_risk_flag"] = (df["suspicious_keyword_count"] >= 3).astype(int)
 
-    # High amount risk flag (claim > 2x provider average)
+    # High amount risk flag (claim > 2x provider average) — soft signal
     df["high_amount_risk_flag"] = (df["claim_to_provider_avg_ratio"] > 2.0).astype(int)
+
+    # New-policy flag (early policy period historically higher risk)
+    df["new_policy_flag"] = (df["days_since_policy_start"] < 180).astype(int)
 
     return df
 
@@ -106,7 +114,7 @@ def main():
         "claim_to_provider_avg_ratio", "approval_ratio",
         "claimant_claim_frequency_score", "provider_risk_score",
         "documentation_risk_flag", "suspicious_text_risk_flag",
-        "high_amount_risk_flag", "rule_based_risk_score"
+        "high_amount_risk_flag", "new_policy_flag", "rule_based_risk_score"
     ]
     print(f"  Added {len(new_features)} engineered features: {new_features}")
 
