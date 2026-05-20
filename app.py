@@ -1,13 +1,19 @@
 """
 Streamlit dashboard — Healthcare Provider FWA Risk Scoring & GenAI Review System.
 
-Six tabs:
+Twelve tabs:
   1. Executive Overview
   2. Provider FWA Pattern Explorer
   3. Model Performance
-  4. High-Risk Provider Review Assistant
-  5. Model Monitoring & Data Quality
-  6. Auditability & Responsible AI
+  4. Temporal Split & Drift
+  5. Real LTC Pipeline (CMS Nursing Home)
+  6. Real NPI-Labeled (Part B ⋈ LEIE) [optional]
+  7. OIG LEIE — Real Federal Fraud
+  8. Fairness Audit
+  9. Feedback Loop
+  10. High-Risk Provider Review Assistant
+  11. Model Monitoring & Data Quality
+  12. Auditability & Responsible AI
 
 Data-source awareness:
   - If data/processed/provider_modeling_table.csv exists → real Kaggle mode

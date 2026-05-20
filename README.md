@@ -17,7 +17,7 @@ Provider-level healthcare FWA pipeline trained on **three real public datasets**
 | Kaggle Healthcare Provider Fraud (Train) | Real Medicare claim structure, anonymized IDs | 5,410 providers × 32 features, 506 fraud labels |
 | **CMS Nursing Home Provider Information** | **Real LTC providers with real names + CCNs** | 14,699 US nursing homes, 22.55% flagged (abuse / SFF / fines / payment denials) |
 | **HHS-OIG List of Excluded Individuals/Entities** | **Real federal fraud exclusions** | 83,256 actual exclusions, 1,818 LTC-specific (1,447 HHA, 256 SNF, 77 Hospice) |
-| **Medicare Physician & Other Practitioners 2023** ⋈ **OIG LEIE** | **Real NPI-keyed Medicare billing + real federal-exclusion labels** | 1.26M real provider NPIs; LTC subset 193K with 80 LEIE-matched fraud labels; full universe 207 matches |
+| **Medicare Physician & Other Practitioners 2023** ⋈ **OIG LEIE** *(optional)* | Real NPI-keyed Medicare billing + real federal-exclusion labels | 1.26M real provider NPIs; LTC subset 193,290 with 25 LEIE-matched fraud labels; full universe 207 matches (separate `make partb-ltc` / `make partb-all` after `make download-partb`) |
 
 Two complete modeling pipelines, real LTC fraud labels, cross-referenced via business-name matching, with semantic + LLM RAG, temporal validation, PSI drift, fairness audit, and reviewer-feedback loop.
 
@@ -35,7 +35,7 @@ Two complete modeling pipelines, real LTC fraud labels, cross-referenced via bus
 | **RAG layer** | Three tiers: TF-IDF + template → semantic dense retrieval (sentence-transformers) → semantic + local LLM generation (flan-t5-base, deterministic decoding) |
 | **Fairness** | Patient-panel demographic audit with 4/5ths-rule disparate-impact check |
 | **Feedback loop** | Analyst-disposition CSV → model-vs-analyst agreement metrics → retrain trigger |
-| **Reproducibility** | `make download-real && make real-pipeline && make cms-ltc` · 37 pytest checks · GitHub Actions CI |
+| **Reproducibility** | `make download-real && make real-pipeline && make cms-ltc` · 48 pytest checks · GitHub Actions CI |
 
 > **Disclaimer:** Public educational dataset only — not Manulife/John Hancock data, not LTC-specific, no PHI. RAG policy text is synthetic. See §4 Data Disclaimer.
 
@@ -47,8 +47,10 @@ An end-to-end FWA analytics pipeline that:
 
 - Ingests and joins the **Kaggle Healthcare Provider Fraud Detection Analysis** dataset
   (inpatient claims + outpatient claims + beneficiary demographics)
-- Engineers **27 provider-level risk features** (volume, reimbursement, physician patterns,
-  chronic-condition complexity, inpatient ratio, admission duration, code diversity)
+- Engineers **32 provider-level risk features** — 27 aggregations (volume,
+  reimbursement, physician patterns, chronic-condition complexity, inpatient
+  ratio, admission duration, code diversity) plus 5 bipartite-graph features
+  (sharing rates, clustering coefficient, PageRank)
 - Trains **Logistic Regression, Random Forest, Gradient Boosting / XGBoost, and Isolation
   Forest** models with class-imbalance handling
 - Evaluates with ROC-AUC, PR-AUC, F1, and a full **threshold sweep** analysis
@@ -56,7 +58,7 @@ An end-to-end FWA analytics pipeline that:
 - Produces **RAG-style provider audit review packets** using TF-IDF retrieval over
   synthetic healthcare billing audit rules
 - Runs **model monitoring and data-quality checks** on the provider feature table
-- Serves a **6-tab Streamlit dashboard** for executives and FWA analysts
+- Serves a **12-tab Streamlit dashboard** for executives and FWA analysts
 
 **Fallback mode:** When Kaggle data is not available, the pipeline runs on a synthetic
 5,000-claim dataset with a hidden latent fraud-intent variable (leakage-aware) — for
@@ -120,21 +122,22 @@ Note that AUC on real LTC data (~0.85) is meaningfully lower than the Kaggle pip
 
 > **Honesty note:** the direct NPI overlap between LEIE and the Kaggle claims is zero because Kaggle's physician identifiers are anonymized (`PHY412132`-style). This is exposed in `src/oig_leie_analysis.py` and reported in the output rather than hidden.
 
-### Dataset 4 — Medicare Physician & Other Practitioners 2023 ⋈ OIG LEIE (real NPI fraud labels)
+### Dataset 4 — Medicare Physician & Other Practitioners 2023 ⋈ OIG LEIE (real NPI fraud labels)  *— optional, experimental*
 
-The strongest real-data join in the project: cross-references real Medicare provider billing with real federal fraud exclusions to produce real NPI-keyed fraud labels.
+> **Scope:** This dataset is **not** part of the core `make real-pipeline` (which is the Kaggle + graph-features path). It requires a separate ~470 MB download and produces extreme-imbalance metrics that need careful interpretation. Treat it as an experimental real-NPI stress test, run on demand via `make partb-ltc`.
 
-- **Source 1:** `data.cms.gov/sites/default/files/.../MUP_PHY_R25_P05_V20_D23_Prov.csv` — Medicare Physician & Other Practitioners by Provider, calendar year 2023, ~472 MB / 1.26M real US providers
+Cross-references real Medicare provider billing with real federal fraud exclusions to produce real NPI-keyed fraud labels.
+
+- **Source 1:** Medicare Physician & Other Practitioners by Provider, calendar year 2023, ~472 MB / 1.26M real US providers (CMS data.cms.gov)
 - **Source 2:** HHS-OIG LEIE NPI list (8,429 real exclusion NPIs)
 - **Join logic:** `Rndrng_NPI` ∈ LEIE NPIs → `excluded_for_fraud = 1`
-- **LTC subset:** Nurse Practitioner + Geriatric Medicine + Hospice & Palliative Care + Geriatric Psychiatry = 193,290 providers, **80 with real LEIE-fraud labels**
-- **Full universe:** 1,259,343 providers, **207 with real LEIE-fraud labels**
-- **Features:** 49 numeric — Medicare billing volume (HCPCS codes, services, charges, payments), beneficiary demographics (age bands, race counts, dual-eligible, chronic-condition prevalences, average risk score)
-- **Engineered ratios:** payment-per-beneficiary, services-per-beneficiary, allowed-to-submitted ratio, dual-share
+- **LTC subset run:** 193,290 providers (Nurse Practitioner + Geriatric Medicine + Hospice & Palliative Care + Geriatric Psychiatry), **25 with real LEIE-fraud labels** after the LTC type filter
+- **Full universe** (run separately via `make partb-all`): 1,259,343 providers with 207 real LEIE-fraud labels
+- **Features:** 54 total — 42 numeric (Medicare billing volume, demographics, chronic-condition prevalences), 4 provider-type one-hots, 2 entity-code dummies, 6 engineered ratios
 
-This is the only pipeline in the project where **every positive case is a real US provider with real Medicare billing data who appears on the federal HHS-OIG exclusion list**. No synthetic labels, no aggregated proxies.
+Every positive case is a real US provider with real Medicare billing data who appears on the federal HHS-OIG exclusion list. No synthetic labels.
 
-The class imbalance is extreme (~0.04% in the LTC subset, ~0.02% in the full universe), so this pipeline is the most-realistic stress test of the entire methodology. Run: `make partb-ltc` (~3 min on CPU) or `make partb-all` (~10 min).
+**Honest results caveat:** the 25-positive LTC run yields PR-AUC ≈ 0.018 (GB best) — that is ~28× the prevalence baseline but tiny in absolute terms. ROC-AUC is more interpretable here (RF 0.79, GB 0.82). This pipeline is included to demonstrate real-NPI labeling end-to-end; it is **not** the production metric of the project. The core metric (RF AUC 0.9526 on the Kaggle 32-feature provider table) lives in `outputs/reports/model_metrics.json`.
 
 ### Reproducibility
 
@@ -310,13 +313,13 @@ This is the closest freely-available public proxy for healthcare FWA analytics:
 ```mermaid
 graph TD
     A[Raw CSV Files<br>Inpatient + Outpatient + Beneficiary] --> B[data_ingestion.py<br>File discovery & validation]
-    B --> C[provider_feature_engineering.py<br>27 provider-level features]
+    B --> C[provider_feature_engineering.py + graph_features.py<br>32 provider-level features]
     C --> D[modeling.py<br>LR + RF + GB/XGB + IsoForest]
     D --> E[Risk Scores per Provider]
     E --> F[explainability.py<br>Feature importance + provider explanations]
     E --> G[rag_claim_review.py<br>TF-IDF policy retrieval + review templates]
     D --> H[monitoring.py<br>Data quality + model monitoring]
-    F --> I[Streamlit Dashboard<br>6-tab analyst interface]
+    F --> I[Streamlit Dashboard<br>12-tab analyst interface]
     G --> I
     H --> I
 ```
@@ -338,7 +341,7 @@ src/data_ingestion.py        — find files, validate columns, load DataFrames
          v
 src/provider_feature_engineering.py
          — join inpatient + outpatient on BeneID to beneficiary
-         — aggregate to provider level (27 features)
+         — aggregate to provider level (27 base features; +5 graph features added by graph_features.py → 32 total)
          — attach fraud labels
          — save data/processed/provider_modeling_table.csv
          |
@@ -613,7 +616,7 @@ Insurance-FWA-Risk-Scoring-GenAI-Claims-Review-System/
 ├── notebooks/
 ├── .github/workflows/ci.yml            # Compile + pytest on push
 ├── Makefile                            # make install / real-pipeline / dashboard / test
-├── app.py                              # Streamlit 11-tab dashboard
+├── app.py                              # Streamlit 12-tab dashboard
 ├── config.py                           # Path constants
 ├── requirements.txt                    # Core deps
 ├── requirements-llm.txt                # Optional: torch + transformers + sentence-transformers
@@ -649,7 +652,7 @@ make psi             # PSI drift report (chronological split)
 make fairness        # patient-panel disparate-impact audit
 make feedback        # analyst-disposition feedback loop (synthesized) + retrain
 make dashboard       # launch Streamlit dashboard
-make test            # run pytest (30 checks)
+make test            # run pytest (48 checks)
 
 # Optional GenAI layer (~700MB of torch + transformers + flan-t5-base download)
 make install-llm     # pip install -r requirements-llm.txt
@@ -721,21 +724,34 @@ streamlit run app.py
 
 ## 21. Sample Outputs
 
-- `outputs/reports/model_metrics.json` — ROC-AUC, F1, precision, recall per model
+Core Kaggle pipeline:
+- `outputs/reports/model_metrics.json` — random-split ROC-AUC, PR-AUC, P/R/F1, Brier, log-loss, 5-fold CV (`_data_source=real_kaggle_provider`)
+- `outputs/reports/model_metrics_temporal.json` — same schema under chronological split
 - `outputs/reports/threshold_analysis.csv` — full threshold sweep (0.05 → 0.95)
+- `outputs/reports/classification_report.txt` — sklearn classification report for the best model
 - `outputs/reports/top_risk_factors.csv` — top 20 features by importance
 - `outputs/reports/high_risk_provider_explanations.csv` — provider-level risk bullets
-- `outputs/sample_reviews/review_*.txt` — formatted RAG audit reviews
-- `outputs/figures/roc_curve.png`, `precision_recall_curve.png`, `feature_importance.png`
+- `outputs/sample_reviews/review_*.txt` — 15 TF-IDF + 10 LLM-generated provider audit reviews
+- `outputs/figures/roc_curve.png`, `precision_recall_curve.png`, `calibration_curve.png`, `feature_importance.png`
 - `outputs/figures/provider_risk_distribution.png`, `fraud_rate_by_volume_bucket.png`
-- `outputs/reports/executive_summary.md` — **leadership-facing 1-pager** (business framing, headline metrics, production roadmap)
-- `sql/provider_features.sql` — **portable SQL implementation** of the provider feature aggregation (Snowflake / BigQuery / Redshift compatible)
+- `outputs/reports/psi_drift_report.csv` + `outputs/figures/psi_top_features.png`
+- `outputs/reports/fairness_audit_report.csv` + `outputs/reports/fairness_audit_age.csv` + 2 figures
+- `outputs/reports/feedback_loop_metrics.json` + `outputs/reports/feedback_log.csv` + calibration figure
+- `outputs/reports/hp_tuning_results.json` + `outputs/reports/hp_tuning_search_rf.csv` — tuned RF best params
+- `outputs/reports/executive_summary.md` — leadership-facing 1-pager
+- `sql/provider_features.sql` — portable SQL implementation of the provider feature aggregation
+
+Real-data pipelines:
+- `outputs/reports/oig_leie_summary.csv`, `oig_leie_ltc_excerpt.csv` + 2 figures — real federal exclusions
+- `outputs/reports/cms_ltc_metrics.json`, `cms_ltc_classification_report.txt` + 3 figures — real CMS Nursing Home LTC pipeline
+- `outputs/reports/cms_ltc_leie_overlap.csv` — name-based CMS ↔ LEIE candidate matches
+- `outputs/reports/medicare_partb_metrics.json` + 3 figures — *(optional)* Part B ⋈ LEIE pipeline
 
 ---
 
 ## 22. Dashboard
 
-The Streamlit dashboard (`app.py`) is a 6-tab analyst-facing interface over the trained models, monitoring reports, and RAG review packets. It is the screenshot-friendly surface for the whole pipeline.
+The Streamlit dashboard (`app.py`) is a 12-tab analyst-facing interface over the trained models, monitoring reports, and RAG review packets. It is the screenshot-friendly surface for the whole pipeline.
 
 ### Launching locally
 
@@ -766,7 +782,7 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 
 | Layer | Deliverable | Location |
 |---|---|---|
-| Data | Provider-level modeling table (5,410 providers × 27 features + label) | `data/processed/provider_modeling_table.csv` |
+| Data | Provider-level modeling table (5,410 providers × 32 features + label) | `data/processed/provider_modeling_table.csv` |
 | Data | Portable SQL reference for the provider feature aggregation | `sql/provider_features.sql` |
 | Modeling | Trained best model (Random Forest) + Isolation Forest anomaly model | `outputs/models/best_fwa_model.pkl`, `isolation_forest.pkl` |
 | Modeling | Model metrics JSON (ROC-AUC, PR-AUC, P/R/F1, Brier, log-loss, 5-fold CV) — random split | `outputs/reports/model_metrics.json` |
@@ -782,7 +798,7 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 | Feedback | **Analyst-disposition feedback loop** with retrain trigger | `outputs/reports/feedback_log.csv`, `feedback_loop_metrics.json` |
 | Real LTC pipeline | **CMS Nursing Home Provider Information** — 14,699 real US nursing homes, real labels | `src/cms_ltc_pipeline.py` + `outputs/reports/cms_ltc_*` |
 | Real federal fraud | **HHS-OIG LEIE** — 83K real federal exclusions, 1,818 LTC-specific | `src/oig_leie_analysis.py` + `outputs/reports/oig_leie_*` |
-| Real NPI-labeled | **Medicare Part B 2023 ⋈ LEIE** — 1.26M real provider NPIs, 207 real fraud labels | `src/medicare_partb_pipeline.py` + `outputs/reports/medicare_partb_*` |
+| Real NPI-labeled *(optional)* | **Medicare Part B 2023 ⋈ LEIE** — 1.26M real provider NPIs, 207 real fraud labels (LTC subset run: 193,290 providers, 25 labels) | `src/medicare_partb_pipeline.py` + `outputs/reports/medicare_partb_*` |
 | Container | Dockerfile (CPU base + optional LLM build-arg) | `Dockerfile` / `make docker` |
 | Logic tests | Unit tests for PSI math, graph features, risk thresholds | `tests/test_logic.py` |
 | Explainability | Top risk factors ranked by importance | `outputs/reports/top_risk_factors.csv` |
@@ -791,8 +807,8 @@ The pipeline produces a complete set of artifacts spanning data, modeling, monit
 | Monitoring | Data quality and feature monitoring reports | `outputs/reports/data_quality_summary.csv`, `model_monitoring_report.csv` |
 | Monitoring | Provider risk, reimbursement, and volume-bucket fraud-rate charts | `outputs/figures/provider_risk_distribution.png`, etc. |
 | Stakeholder | Executive summary 1-pager (business framing, headline metrics, roadmap) | `outputs/reports/executive_summary.md` |
-| Application | 6-tab Streamlit dashboard | `app.py` |
-| Engineering | pytest suite (13 tests) | `tests/` |
+| Application | 12-tab Streamlit dashboard | `app.py` |
+| Engineering | pytest suite (48 tests; structural + logic) | `tests/` |
 | Engineering | GitHub Actions CI (compile + tests) | `.github/workflows/ci.yml` |
 | Engineering | Makefile (install / real-pipeline / synthetic-demo / dashboard / test) | `Makefile` |
 

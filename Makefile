@@ -39,7 +39,7 @@ help:
 	@echo ""
 	@echo "  Run:"
 	@echo "    dashboard        Launch Streamlit dashboard"
-	@echo "    test             pytest test suite (17 checks)"
+	@echo "    test             pytest test suite (48 checks)"
 	@echo "    clean-outputs    Remove generated outputs (keep raw + processed data)"
 
 install:
